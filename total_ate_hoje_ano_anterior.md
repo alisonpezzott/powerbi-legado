@@ -1,0 +1,13 @@
+```DAX
+Total Ano Anterior Até Hoje = 
+  
+  VAR _HojeAnoPassado = EDATE( TODAY(), -12 )
+
+RETURN
+  
+  CALCULATE(
+      SUM( fTabela[Valor] )
+      , KEEPFILTERS( dCalendario[Data] <= _HojeAnoPassado )
+      , SAMEPERIODLASTYEAR( dCalendario[Data] )
+  )
+```
