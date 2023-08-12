@@ -1,0 +1,524 @@
+power-query-m
+
+let
+    GeraCalendario =
+
+//Parâmteros de entrada base
+let
+    FnBase = (
+        optional idioma as text,
+        optional anoCompleto as text,
+        optional modo as text,
+        optional dataInicialManual as date, 
+        optional dataFinalManual as date,
+        optional datasFatos as list,
+        optional dataAtualModo as text,
+        optional dataAtualManual as date,
+        optional diaInicialFechamentoMes as number,
+        optional mesInicialAnoFiscal as number        
+    ) =>
+
+// Define os prefixos das semanas e trimestres no idioma selecionado
+let
+    Idioma = if idioma is null then "pt-BR" else idioma,
+    PrefixosFiltrados = Table.Buffer( Table.SelectRows( CalendarioPrefixos, each [Idioma] = Idioma ) ),
+    PrefixoSemana = PrefixosFiltrados{0}[Semana],
+    PrefixoTrimestre = PrefixosFiltrados{0}[Trimestre],
+
+//Faz o check da data atual
+    DataAtual = if dataAtualModo = "Automático" or dataAtualModo is null or dataAtualManual is null then DataAtualReferencia 
+        else if dataAtualModo = "Manual" and dataAtualManual <> null then dataAtualManual
+        else DataAtualReferencia,
+
+//Faz o check das datas de diaInicialFechamentoMes e mesInicialAnoFiscal
+    DiaInicialFechamentoMes = if diaInicialFechamentoMes is null then 16 else diaInicialFechamentoMes,
+    MesInicialAnoFiscal = if mesInicialAnoFiscal is null then 4 else mesInicialAnoFiscal,
+
+
+//Define as referências de datas inicial e final
+    dataInicialAuto = if datasFatos is null then Date.StartOfYear(DataAtual) else List.Min( datasFatos ),
+    dataFinalAuto = if datasFatos is null then Date.EndOfYear(DataAtual) else List.Max( datasFatos ),
+    
+    DataInicial = if modo = "Manual" and dataInicialManual <> null then dataInicialManual else dataInicialAuto,
+    DataFinal = if modo = "Manual" and dataFinalManual <> null then dataFinalManual else dataFinalAuto, 
+
+    InicioAnoDataInicial = Date.StartOfYear( DataInicial ),
+    FinalAnoDataFinal = Date.EndOfYear( DataFinal ),
+    
+    DataInicialRef = if anoCompleto = "Não" then DataInicial else InicioAnoDataInicial,
+    DataFinalRef = if anoCompleto = "Não" then DataFinal else FinalAnoDataFinal,
+            
+//Gera a lista de datas
+    QtdDiasPeriodo = Duration.Days( DataFinalRef - DataInicialRef ) + 1,           
+    ListaDatas = List.Buffer( 
+        List.Dates( 
+            DataInicialRef, 
+            QtdDiasPeriodo, 
+            #duration(1, 0, 0, 0) 
+        ) 
+    ),
+
+//Transforma em tabela                
+    TabelaDatas = Table.FromList( 
+        ListaDatas, 
+        Splitter.SplitByNothing(), 
+        type table[ Data = Date.Type ] 
+    ),
+
+//Adicionando as colunas personalizadas
+    DataSQL = Table.AddColumn(
+         TabelaDatas, 
+        "DataSQL", 
+        each Date.ToText( [Data], [Format="yyyy-MM-dd"] ), 
+        type text
+    ),  
+    Ano = Table.AddColumn(
+        DataSQL, 
+        "Ano", 
+        each Date.Year( [Data] ), 
+        Int64.Type
+    ),
+    Mes = Table.AddColumn(
+        Ano,
+        "Mes",
+        each Date.MonthName( [Data] , Idioma ),
+        type text
+    ),
+    MesAb = Table.AddColumn(
+        Mes,
+        "MesAb",
+        each Text.Start( [Mes], 3 ),
+        type text
+    ),
+    MesNum = Table.AddColumn(
+        MesAb, 
+        "MesNum", 
+        each Date.Month( [Data] ), 
+        Int64.Type
+    ),
+    InicioMes = Table.AddColumn(
+        MesNum,
+        "InicioMes",
+        each Date.StartOfMonth( [Data] ),
+        type date
+    ),
+    FinalMes = Table.AddColumn(
+        InicioMes,
+        "FinalMes",
+        each Date.EndOfMonth( [Data] ),
+        type date
+    ),
+    MesAno = Table.AddColumn(
+        FinalMes,
+        "MesAno",
+        each [MesAb] & "/" & Text.From( [Ano] ),
+        type text
+    ),
+    MesAnoNum = Table.AddColumn(
+        MesAno,
+        "MesAnoNum",
+        each [Ano] * 100 + [MesNum],
+        Int64.Type
+    ),
+    Dia = Table.AddColumn(
+        MesAnoNum,
+        "Dia",
+        each Date.Day( [Data] ),
+        Int64.Type
+    ),
+    DiaSemana = Table.AddColumn(
+        Dia,
+        "DiaSemana",
+        each Date.DayOfWeekName( [Data], Idioma ),
+        type text
+    ),
+    DiaSemanaAb = Table.AddColumn(
+        DiaSemana,
+        "DiaSemanaAb",
+        each Text.Start( [DiaSemana], 3 ),
+        type text
+    ),
+    DiaSemanaNum = Table.AddColumn(
+        DiaSemanaAb,
+        "DiaSemanaNum",
+        each Date.DayOfWeek( [Data], Day.Monday ),
+        Int64.Type
+    ),
+    SemanaNum = Table.AddColumn(
+        DiaSemanaNum,
+        "SemanaNum",
+        each 
+            let
+                quintaDaSemana = Date.AddDays( [Data], 3 - [DiaSemanaNum] ),
+                inicioAnoQuintaDaSemana = #date( Date.Year ( quintaDaSemana ), 1, 1 ),
+                difDias = Duration.Days( quintaDaSemana - inicioAnoQuintaDaSemana )
+            in
+                Number.IntegerDivide( difDias, 7, 0 ) + 1, 
+                Int64.Type 
+        ),
+    AnoISO = Table.AddColumn( 
+        SemanaNum, 
+        "AnoISO", 
+        each  Date.Year( Date.AddDays([Data], 26 - [SemanaNum])), 
+        Int64.Type
+    ),
+    SemanaAno = Table.AddColumn(
+        AnoISO,
+        "SemanaAno",
+        each PrefixoSemana & Text.PadStart( Text.From( [SemanaNum] ), 2, "0" ) & "/" & Text.From( [AnoISO] ),
+        type text
+    ),
+    SemanaAnoNum = Table.AddColumn(
+        SemanaAno,
+        "SemanaAnoNum",
+        each [AnoISO] * 100 + [SemanaNum],
+        Int64.Type
+    ),
+    InicioSemana = Table.AddColumn(
+        SemanaAnoNum,
+        "InicioSemana",
+        each Date.StartOfWeek( [Data], Day.Monday ),
+        type date
+    ),
+    FinalSemana = Table.AddColumn(
+        InicioSemana,
+        "FinalSemana",
+        each Date.EndOfWeek( [Data], Day.Monday ),
+        type date
+    ),
+    TrimestreNum = Table.AddColumn(
+        FinalSemana,
+        "TrimestreNum",
+        each Date.QuarterOfYear( [Data] ),
+        Int64.Type
+    ),
+    Trimestre = Table.AddColumn(
+        TrimestreNum,
+        "Trimestre",
+        each PrefixoTrimestre & Text.From( [TrimestreNum] ),
+        type text 
+    ),
+    TrimestreAno = Table.AddColumn(
+        Trimestre,
+        "TrimestreAno",
+        each [Trimestre] & "/" & Text.From( [Ano] ),
+        type text
+    ),
+    TrimestreAnoNum = Table.AddColumn(
+        TrimestreAno,
+        "TrimestreAnoNum",
+        each [Ano] * 10 +  [TrimestreNum],
+        Int64.Type
+    ),
+
+//Define a função GeraFeriados
+    GeraFeriados = ( Ano as number )=> let
+
+    FeriadosMoveis = 
+        let
+            Pascoa = Table.FromValue( 
+                let
+                    x = 24,
+                    y = 5,
+                    a = Number.Mod( Ano, 19 ),
+                    b = Number.Mod( Ano, 4 ),
+                    c = Number.Mod( Ano, 7 ),
+                    d = Number.Mod( ( 19 * a + x ), 30 ),
+                    e = Number.Mod( ( (2 * b) + (4 * c) + (6 * d) + y ) , 7 ),
+                    Dia = if ( d + e ) > 9 then ( d + e - 9) else ( d + e + 22 ),
+                    Mes = if ( d + e ) > 9 then 4 else 3
+                in
+                    #date( Ano, Mes, Dia ),
+                [DefaultColumnName = "Páscoa"]
+            ),
+            SextaFeiraSanta = Table.AddColumn(
+                Pascoa,
+                "Sexta-feira Santa",
+                each Date.AddDays( [Páscoa], -2 ),
+                type date
+            ),
+            Carnaval = Table.AddColumn(
+                SextaFeiraSanta,
+                "Carnaval",
+                each Date.AddDays( [Páscoa], -47 ),
+                type date
+            ),
+            CorpusChristi = Table.AddColumn(
+                Carnaval,
+                "Corpus Christi",
+                each Date.AddDays( [Páscoa], 60 ),
+                type date
+            )
+        in
+            Table.UnpivotOtherColumns( CorpusChristi, {}, "Feriado", "Data" ),
+
+    FeriadosFixos = 
+        let
+            Data = Table.AddColumn(
+                FeriadosFixos,
+                "Data",
+                each #date( Ano, [Mes], [Dia] ),
+                type date
+            )
+        in
+            Table.SelectColumns (Data, {"Data", "Feriado"} )
+    
+    in
+        Table.Combine({
+            FeriadosFixos,
+            FeriadosMoveis
+        }),
+
+//Adicionando os feriados
+    Feriados = Table.AddColumn(
+        TrimestreAnoNum,
+        "Feriado",
+            let
+                Anos = Table.SelectColumns( TrimestreAnoNum, {"Ano"} ),
+                AnosDistintos = Table.Distinct( Anos ),
+                FeriadosGerados = Table.AddColumn( AnosDistintos, "fxFeriados", each GeraFeriados([Ano]) ),
+                FeriadosExpandidos = Table.ExpandTableColumn( FeriadosGerados, "fxFeriados", {"Data", "Feriado"}, {"Data", "Feriado"} ),
+                ColunaAnoRemovida = Table.RemoveColumns( FeriadosExpandidos, {"Ano"} ),
+                TipagemColunas = Table.TransformColumnTypes( ColunaAnoRemovida, { {"Data", type date}, {"Feriado", type text} }),
+                TabFeriados = Table.Buffer( TipagemColunas )
+            in
+                each
+                    let
+                        DataLinha = _[Data]
+                    in
+                        try Table.SelectRows( TabFeriados, each [Data] = DataLinha )[Feriado]{0} otherwise null,
+            type text
+    ),
+    
+//Adicionando dias úteis
+    DiaUtilNum = Table.AddColumn(
+        Feriados,
+        "DiaUtilNum",
+        each if [Feriado] <> "" and  [Feriado] <> null or [DiaSemanaNum] = 0 or [DiaSemanaNum] = 6
+            then 0
+            else 1,
+        Int64.Type
+    ),
+    DiaUtil = Table.AddColumn(
+        DiaUtilNum, 
+        "DiaUtil", 
+        each if [DiaUtilNum] = 1 
+            then "Dia útil" 
+            else "Dia não útil", 
+        type text
+    ),
+
+//Adicionando o ano fiscal
+    AnoFiscal = Table.AddColumn(
+        DiaUtil,
+        "AnoFiscal",
+        each 
+            let 
+                AnoFiscalInicial = if [MesNum] >= MesInicialAnoFiscal
+                    then [Ano] 
+                    else [Ano] - 1 
+            in
+            Number.ToText( AnoFiscalInicial ) & "/" & Number.ToText( AnoFiscalInicial + 1 ),
+        type text
+        ),
+
+//Adicionando Data Fechamento
+    MesNumFechamento = Table.AddColumn(
+        AnoFiscal,
+        "MesFechamentoNum",
+        each
+            if [Dia] >= DiaInicialFechamentoMes
+            then
+                if [MesNum] = 12 
+                    then 1 
+                    else [MesNum] + 1
+            else
+                [MesNum],
+        Int64.Type
+    ),
+    MesFechamento = Table.AddColumn(
+        MesNumFechamento,
+        "MesFechamento",
+        each Date.MonthName( #date( 1, [MesFechamentoNum], 1 ), Idioma ),
+        type text
+    ),
+    MesFechamentoAb = Table.AddColumn(
+        MesFechamento,
+        "MesFechamentoAb",
+        each Text.Start( [MesFechamento], 3 ),
+        type text
+    ),
+    AnoFechamento = Table.AddColumn(
+        MesFechamentoAb,
+        "AnoFechamento",
+        each if [Dia] >= DiaInicialFechamentoMes and [MesNum] = 12 
+            then [Ano] + 1
+            else [Ano],
+        Int64.Type
+    ),
+    MesAnoFechamento = Table.AddColumn(
+        AnoFechamento,
+        "MesAnoFechamento",
+        each [MesFechamentoAb] & "/" & Text.From( [AnoFechamento] ),
+        type text
+    ),
+    MesAnoFechamentoNum = Table.AddColumn(
+        MesAnoFechamento,
+        "MesAnoFechamentoNum",
+        each [AnoFechamento] * 100 + [MesFechamentoNum],
+        Int64.Type
+    ),
+    
+//Cria datas offset em relação a data atual
+    DataOffset = Table.AddColumn(
+        MesAnoFechamentoNum,
+        "DataOffset",
+        each Number.From( [Data] - DataAtual ),
+        Int64.Type
+    ),
+    SemanaOffset = Table.AddColumn(
+        DataOffset,
+        "SemanaOffset",
+        each 
+            let
+                linha = Date.StartOfWeek( [Data], Day.Monday ),
+                atual = Date.StartOfWeek( DataAtual, Day.Monday )
+            in 
+                Number.From( linha - atual ) / 7,
+        Int64.Type
+    ),
+    MesOffset = Table.AddColumn(
+        SemanaOffset,
+        "MesOffset",
+        each 
+            let
+                Linha = [Ano] * 12 - 1 + [MesNum],
+                Atual = Date.Year( DataAtual ) * 12 - 1 + Date.Month( DataAtual )
+            in
+                Linha - Atual,
+        Int64.Type
+    ),
+    TrimestreOffset = Table.AddColumn(
+        MesOffset,
+        "TrimestreOffset",
+        each 
+            let
+                Linha = [Ano] * 4 - 1 + [TrimestreNum],
+                Atual = Date.Year( DataAtual ) * 4 - 1 + Date.QuarterOfYear( DataAtual )
+            in
+                Linha - Atual,
+        Int64.Type
+    ),
+    AnoOffset = Table.AddColumn(
+        TrimestreOffset,
+        "AnoOffset",
+        each 
+            let
+                Linha = [Ano],
+                Atual = Date.Year( DataAtual )
+            in
+                Linha - Atual,
+        Int64.Type
+    ),
+//Armazena a tabela completa na memória antes de renomear as colunas
+    TabelaCompleta = Table.Buffer( AnoOffset ),
+
+//Tabela dos nomes de colunas filtrada pelo idioma
+    TabNomesColunasIdiomaFiltrado = Table.SelectRows( 
+        CalendarioNomesColunas, 
+        each ( [Idioma] = Idioma )
+    ),
+
+//Remove a coluna idioma da tabela de nomes das colunas
+    RemoveColunaIdioma = Table.RemoveColumns( 
+        TabNomesColunasIdiomaFiltrado, 
+        {"Idioma"} 
+    ),
+                
+// Faz o pivot da tabela criando as colunas "De" e "Para" dos nomes das colunas
+    TabDePara = Table.UnpivotOtherColumns( 
+        RemoveColunaIdioma, 
+        {}, 
+        "De", "Para" 
+    ),
+
+// Transforma em uma lista de listas "DePara" dos nomes das colunas
+    RegistrosExtraidos = Table.AddColumn( 
+        TabDePara, 
+        "DePara", 
+        each Record.FieldValues(_)
+    )[DePara],
+
+//Renomeia as colunas da tabela de acordo com o De/Para extraído na etapa anterior
+    ColunasRenomeadas = Table.RenameColumns(
+        TabelaCompleta,
+        RegistrosExtraidos
+    )
+in
+   ColunasRenomeadas,
+
+//Faz a restrição dos parâmetros de entrada e personaliza as mensagens na função de entrada
+    ParametrosValidos =
+        let
+            FnValidos = type function(
+                optional idioma as ( type text meta [ 
+                        Documentation.AllowedValues = CalendarioNomesColunas[Idioma],
+                        Documentation.FieldCaption = "Idioma",
+                        Documentation.FieldDescription = "Idioma que servirá de base para geração dos nomes das colunas da tabela, nomes dos meses, dias da semana e demais textos. Para a utilização de outros novos idiomas, faça a inclusão dos dados nas tabelas CalendarioPrefixos e CalendariosNomesColunas. Se não selecionado será utilizado o português do Brasil."
+                    ]),
+                optional anoCompleto as ( type text meta [ 
+                        Documentation.AllowedValues = { "Sim", "Não" },
+                        Documentation.FieldCaption = "Ano Completo",
+                        Documentation.FieldDescription = "Sim ou não selecionado = Retorna as datas entre o início do ano da data inicial e o final do ano da data final. Não: Retorna as datas entre a data inicial e a data final."
+                    ]),  
+                optional modo as ( type text meta [ 
+                        Documentation.AllowedValues = { "Manual", "Automático" },
+                        Documentation.FieldCaption = "Modo",
+                        Documentation.FieldDescription = "Manual: Utiliza como referências os parâmetros de entrada especificados abaixo, portanto obrigatório informar estes parâmetros. Automático ou não selecionado: Utiliza as datas das tabelas fatos selecionadas no parâmetro abaixo ""Datas Fatos""."
+                    ]),  
+                optional dataInicial as ( type date meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "Data Inicial Manual",
+                        Documentation.FieldDescription = "Data inicial para o modo manual."
+                    ]),
+                optional dataFinal as ( type date meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "Data Final Manual",
+                        Documentation.FieldDescription = "Data final para o modo manual."          
+                    ]),
+                optional datasFatos as ( type list meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "Datas Fatos",
+                        Documentation.FieldDescription = "Coluna da tabela fato utilizada referência para geração da tabela calendário no modo automático. É possível utilizar ""DatasFatos[Datas]"" que é uma query que recebe a combinação de todas as colunas tipo data do modelo. Inclua entre as chaves da etapa ""Fonte"" da query ""DatasFatos"" quais colunas deverão ser utilizadas como referência. Por exemplo: Fonte = List.Buffer( List.Distinct( List.Combine({FtExemplo[Data], FtExemplo[DataConclusao]}))). Atenção para possíveis erros das tabelas fatos. Se nenhuma coluna for especificada, as datas iniciais e finais serão a primeira e última data do ano atual."
+                    ]),
+                optional dataAtualModo as ( type text meta [ 
+                        Documentation.AllowedValues = { "Manual", "Automático" },
+                        Documentation.FieldCaption = "Modo Data Atual",
+                        Documentation.FieldDescription = "Manual: Utiliza como referência a data especificada no parâmetro de entrada abaixo. Automático ou não selecionado: Utiliza a query ""DataAtualReferencia"" que por padrão é a data automática do modelo na data de hoje. Caso queira utilizar outras referências, pode se fazer ajustar esta query para buscar qualque outra referência, por exemplo, a última data de produção."
+                    ]),
+                optional dataAtual as ( type date meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "Data Atual Manual",
+                        Documentation.FieldDescription = "Data atual para o modo manual"
+                    ]),
+                optional diaInicialFechamentoMes as ( type number meta [ 
+                        Documentation.AllowedValues = { 1..28 },
+                        Documentation.FieldCaption = "Dia Inicial de Fechamento do Mês",
+                        Documentation.FieldDescription = "Número correpondente ao dia em que se inicia cada período de fechamento. Se não informado o padrão será 16."
+                    ]),
+                optional mesInicialAnoFiscal as ( type number meta [ 
+                        Documentation.AllowedValues = { 1..12 },
+                        Documentation.FieldCaption = "Mês Inicial do Ano Fiscal",
+                        Documentation.FieldDescription = "Número correpondente ao mês em que se inicia cada ano fiscal. Se não informado o padrão será 4."
+                    ])                
+            ) as table meta[],
+            //     Documentation.Name = "DimCalendario por Alison Pezzott",
+            //     Documentation.LongDescription = "Script para geração de uma tabela DimCalendario completa e personalizada"
+            // ],
+            AtribuiMetadados = Value.ReplaceType( FnBase, FnValidos ) 
+        in
+            AtribuiMetadados
+in
+    ParametrosValidos
+in
+    GeraCalendario
