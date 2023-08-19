@@ -9,16 +9,16 @@ This repository was created to share my projects of Power BI. Including:
 - PBIX files
 - and more...
 
-Please visit and **subscribe** my **YouTube** channel: 👉 [Click here!](https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1)
+Please visit and **subscribe** my **YouTube** channel: 👉 [Click here!](https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1) <br>
 
-Follow me on my social networks:
-📷 Instagram: https://www.instagram.com/alisonpezzott
-💼 Linkedin: https://www.linkedin.com/in/alisonpezzott
-
-We are just starting. The best is coming! 
-
+Follow me on my social networks: <br>
+📷 Instagram: https://www.instagram.com/alisonpezzott <br>
+💼 Linkedin: https://www.linkedin.com/in/alisonpezzott <br>
+<br>
+We are just starting. The best is coming!<br>
+<br>
 ## Main files of this repository
-Dates Table / Dimensão Calendário: [power-query-dates-table](power-query-dates-table)
-Hours Table / Dimensão Horas:  
+Dates Table / Dimensão Calendário: [power-query-dates-table]<br>
+Hours Table / Dimensão Horas:  [power-query-time-table]<br>
 
 
