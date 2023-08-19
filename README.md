@@ -18,7 +18,7 @@ Follow me on my social networks: <br>
 We are just starting. The best is coming!<br>
 <br>
 ## Main files of this repository
-Dates Table / Dimensão Calendário: [power-query-dates-table]<br>
-Hours Table / Dimensão Horas:  [power-query-time-table]<br>
+Dates Table / Dimensão Calendário: [power-query-dates-table](https://github.com/alisonpezzott/powerbi/blob/main/power-query-dates-table)<br>
+Hours Table / Dimensão Horas:  [power-query-time-table](https://github.com/alisonpezzott/powerbi/blob/main/power-query-time-table)<br>
 
 
