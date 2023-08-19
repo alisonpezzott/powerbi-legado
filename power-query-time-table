@@ -1,0 +1,110 @@
+let
+    // Define the language.
+    // Options: en-US (default),  pt-BR, es-ES, hi-IN, fr-FR, de-DE
+    Culture = "en-US",
+    PeriodsNamesInput = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("VY89EgIhDIXvQr0cAmfXTgt/qp0t4pIFCsIOwnggLWw9AxeTsDZWecl8eXkZR4Ekr2fRiR4eVMshRHJkqlJLwkgh8PTojE1i6kaxJrk7MQc6ZgMamiZbnlVcIGpkPLiEDce7HNhdeSCcMTa6fIDgD5/thi9R7tld5Rs2NDk+r9ZY3nfpnXaMZ7dl0Sj7gaOXl/cYc4tdHzDYMsNsvUsJzK+pS9MX", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Culture = _t, Dawn = _t, Morning = _t, Afternoon = _t, Night = _t]),
+    PeriodsTb = Table.RemoveColumns ( Table.SelectRows ( PeriodsNamesInput, each [Culture] = Culture ), "Culture" ),
+    ColumnNamesTbInput = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("pZFBTgMhGIWvMmE9LDrpCczU1IVJ06mbTmYxGX6VRKChECe9Qw/hzi48BRcTfkBRoxsTknnvAe/Lz/Q9AUnvOlKTG8lg9t8dF1C1MHExPmXbLNdZLpog18rqlKKM6S2X1oAXHUxKMi82oLliZKh7cjD0ausjd5aMT4A3tXvx+wXtI2qWj6VdNMmOnztjSpGqkPpgJVMR696UlwEMR7rqvoB3HMRBVawYEoNYncx/kPeaXm/jm0Zi6y7Iqkzo1oBQL4+ZiTohwWrITNQFFMvAzty9iqA37hJeGBDLgLar4lfugRsGpzRkcKkWZWztjB8g45L5xts/++OQrunRil9hBmbzgxtL/y6sSVjD8A4=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Culture = _t, Index = _t, #"Time Decimal" = _t, #"Time 24H" = _t, #"Time 12H" = _t, #"Hour 24H" = _t, #"Hour 12H" = _t, Minute = _t, Second = _t, Period = _t]),
+    ColumnNamesTb = Table.RemoveColumns (
+        Table.SelectRows ( ColumnNamesTbInput, each [Culture] = Culture ),
+        "Culture"
+    ),
+    DawnName = PeriodsTb[Dawn]{0},
+    MorningName = PeriodsTb[Morning]{0},
+    AfternoomName = PeriodsTb[Afternoon]{0},
+    NightName = PeriodsTb[Night]{0},
+    ZeroWidthSpace = Character.FromNumber ( 8203 ),
+    AddIndex = Table.FromList ( 
+        {0..86399}, 
+        Splitter.SplitByNothing(), 
+        type table [ Index = Int64.Type ] 
+    ),
+    AddTimeDecimal = Table.AddColumn ( 
+        AddIndex, 
+        "Time Decimal", 
+        each Number.RoundDown ( [Index] / 3600, 10 ), 
+        type number 
+    ),
+    AddTime24 = Table.AddColumn ( 
+        AddTimeDecimal, 
+        "Time 24H", 
+        each Duration.ToText ( #duration( 0, 0, 0, [Index] ) ), 
+        type text 
+    ),
+    AddHour24 = Table.AddColumn ( 
+        AddTime24, 
+        "Hour 24H", 
+        each Number.From ( Text.BeforeDelimiter ( [Time 24H], ":", 0 ) ), 
+        Int64.Type 
+    ),
+    AddHour12 = Table.AddColumn ( 
+        AddHour24, 
+        "Hour 12H", 
+        each 
+            let 
+                Hour = if [Hour 24H] > 12 then [Hour 24H] - 12 else [Hour 24H],
+                NumRepeat = 24 - [Hour 24H],
+                Suffix = if [Hour 24H] >= 12 then "PM" else "AM"
+            in
+                Text.Repeat ( ZeroWidthSpace, NumRepeat) & Text.From ( Hour ) & " " & Suffix,
+        type text 
+    ),
+    AddMinute = Table.AddColumn ( 
+        AddHour12, 
+        "Minute", 
+        each Number.From ( Text.BetweenDelimiters ( [Time 24H], ":", ":" ) ),  
+        Int64.Type 
+    ),
+    AddSecond = Table.AddColumn ( 
+        AddMinute, 
+        "Second", 
+        each Number.From ( Text.AfterDelimiter ( [Time 24H], ":", {0, RelativePosition.FromEnd} ) ), 
+        Int64.Type 
+    ),
+    AddTime12 = Table.AddColumn ( 
+        AddSecond, 
+        "Time 12H", 
+        each 
+        let 
+            Hour = if [Hour 24H] > 12 then [Hour 24H] - 12 else [Hour 24H],
+            NumRepeat = if [Hour 24H] >= 12 then 1 else 1,
+            Suffix = if [Hour 24H] >= 12 then "PM" else "AM"
+        in
+            Text.Repeat ( ZeroWidthSpace, NumRepeat ) 
+                & Text.PadStart ( Text.From ( Hour ), 2, "0" ) 
+                & ":" & Text.PadStart ( Text.From ( [Minute] ), 2, "0" ) 
+                & ":" & Text.PadStart ( Text.From ( [Second] ), 2, "0" ) 
+                & " " & Suffix,
+        type text 
+    ),
+    AddPeriod = Table.AddColumn ( 
+        AddTime12, 
+        "Period", 
+        each if [Hour 24H] < 6 then Text.Repeat(ZeroWidthSpace,4) & DawnName 
+            else if [Hour 24H] < 12 then Text.Repeat(ZeroWidthSpace,3) & MorningName 
+            else if [Hour 24H] < 18 then Text.Repeat(ZeroWidthSpace,2) & AfternoomName 
+            else ZeroWidthSpace & NightName, 
+        type text 
+    ),
+    ReorderedColumns = Table.ReorderColumns(
+        AddPeriod,
+        {
+            "Index", 
+            "Time Decimal", 
+            "Time 24H", 
+            "Time 12H", 
+            "Hour 24H", 
+            "Hour 12H", 
+            "Minute", 
+            "Second", 
+            "Period"
+        }
+    ),
+    ListToRename = Table.AddColumn (
+        Table.UnpivotOtherColumns ( ColumnNamesTb, {}, "From", "To" ),
+        "FromTo",
+        each Record.FieldValues ( _ )
+    )[FromTo],
+    RenamedColumns = Table.RenameColumns ( ReorderedColumns, ListToRename )
+in
+    RenamedColumns
