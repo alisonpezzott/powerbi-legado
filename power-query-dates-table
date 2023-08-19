@@ -1,0 +1,609 @@
+let
+    // Define the language.
+    // Options: en-US (default),  pt-BR, es-ES, fr-FR, de-DE
+    Culture = "en-US",
+    // Define the StartDate.
+    // You can use List.Min(FactTable[Date]) as reference.
+    StartDate = Date.StartOfYear ( #date(2021, 1, 1) ),
+    // Define the EndDate. 
+    // You can use List.Max(FactTable[Date]) as reference.
+    EndDate = Date.EndOfYear ( #date(2023, 12, 31) ),
+    // Define the CurrentDate. 
+    // You can use List.Max(FactTable[Date]) as reference.
+    CurrentDate = Date.From ( DateTime.LocalNow() ),
+    // Define the number of month of start of the fiscal year.
+    // Default: 3 (March)
+    MonthOfStartFiscalYear = 3,
+    // Define the number of day of month of start of the fiscal year.
+    // Default: 15
+    DayOfStartFiscalYear = 15,
+    // 1-Capitalized / 2-Upper / 3-Lower / 4-Culture Default
+    TextCaptalization = 1,
+    // Demiliter of the columns with separator as example month/year. Default: "/"
+    Delimiter = "/",
+    // Input here your fixed holidays table.
+    FixedHolidaysInput = Table.FromRows (
+        Json.Document (
+            Binary.Decompress (
+                Binary.FromText (
+                    "PY5BC8IwDIX/SunZgxsO8SgOQRgooqexQ9ZGVtjakXXC/PUmHXp4OXx5Ly91rTO9SXp690aaoFdngojk3QeiC143m1rn4tixHo7Aoo84JS64YFXQBlIlLInumRxYF29xRB7e4H+Z5VK45XGdSVVgFxVe6jgCoXEW1jqxyO0Swa6p4oduFEwPQ/pNkrFDdcdxbntn1nCyyolTR26KA/CvzRc=",
+                    BinaryEncoding.Base64
+                ),
+                Compression.Deflate
+            )
+        ),
+        let
+            _t = ((type nullable text) meta [Serialized.Text = true])
+        in
+            type table [ Day = _t, Month = _t, Holiday = _t ]
+    ),
+    ColumnNamesTbInput = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("jVfNbhs3EH4VQucICHrp2aksVEFso5Fso3V9oLSUxHqXG5C7juM36KEv0GsPhQLkUPRW9LYvVpIzQ87+uO3Fq/lm+HFmOJ93eXc3U2Z+vZ69mi1ko/xjZQr15J/fK2nxId6rR2Vd8F7UpjmKy7baKptNWQXf2XarHrVnKUQPz4ZYGd1oWTqPrhtpG1HvIdYD56bgJqyibMDCnBbyE49Es++8Veqhb7E0LeU54R5CPOcI5q1ib1brK14N7huKuUpWXEelRAMZvmv9MmUZ5wChrBI/+nO/MkBLaSOykXmtKuX6mw2htDQ5MHDzsYZ2O7Z6DKb1zIXBS+12siTrar93qhE4cmhhs9Ci00Uzl4kAMn1bl7qQn8LgOnFb2wdtDuFYQ6OzldqopKvN7P7V3exDM3/zHsZe+kf3iyn0Ls6HqeEvjn2wLru/KmVrUfiyus9hFC5rPxoD8wwGq+Bxfnp2WmoXoMGalem+7DQPXuqKWZgSQ8JDQH4LLZkDLeaSwp+hNJKlOon3ch5GTCU/jIEfeffQONBEqo9FxwqZTTUCUGY+INtYHQbRqsxPeUy4WEMb8uaucoi23TAsEwIbaAD4ZUTYgXDnIBzMN6Ps2GrulP3w3ERQDE6ogKnP/Ul2nIlk5SISFLiSsVQ2HHZI5+d4lN2vjS4HQ0LYuWtk93v3Wx0Fo9z8fB0pdseBYro/anz4/wAjzShxoVAj21CzKvsAG8HkgskrlYvYaGV0M+qlNtmgRoPl/wpMMI5u4lh0X8AkL9ii7EuENv4Xd7+AqcAXy5kKJkXl1KCzKCqq3GVNxeL/h6aAjSknb8FymvTnfTc9aZkhNJRWTIBpC+iyfvIWSSAemvJnheGB1S4cJTZ1RCIm/bGVRRh1dBKW5BbnO4R8U1cflHFyp7s/DT+Xkeci7jGCc9XkKXgKw/A4C0u/QD/WUX0wHe/ktrZyW6qJeeS+oFagCmrd2/kSX2/4VUdvN9Od8g/Ua+Ruq+4U9Nr6d69GfQ4sP+nd6dCdGIyfR6EDbZhssUiuRXfatg2LjePCVvqPBV+LIyA8RErwbd1aFg2mEu9+bF+//upr2Q9T9FbRBvsU8iBfOfTxOiaDRlW9FIi/pjKjDkfdUi8UW8uES7tCR6a3SJ3hAh3tisnmmMU4JifzH2LOR5RQN3hVIiUT7Gg7ZGmzqidyYu9PylK1T/H0X+AkmaewCVY8Ax4WpPKk7C4s5+9YiOpOHpAH3nfAgA/2QQA6CfG9trFdGd+N3Emziw30WhXXBibqqn1k8k6DFuC4xdp/gOE3a6Hmi3PItq1m+a72Vh4tPsR1dVAP6mjjt0FtZONMW1V0WwsmXYN8XPe3fQ6f+T0Pzb5BbZLLuMQhzV6awyxeQkJrKSwF6Hxvk43A/MDVyLBwIw+RPrhiS27r3VEZcMZ7V2BNoBtmHEOKYUg/9exK6UdIrCrBWwYKheitOmhjcmUWWJKfCgMiZLnRyl9Oyp/ASqnFOwvcHOlnv3EvBNEefdp0J+u1jdA5IPPhDQ4X//BRaTgjXn1Aq955Tcd5mTxIyuPGvy9k81zgDMKn5Zy6hGakwGDV+BNzAqvJMUh+bUvZbsPheVGc2a3SNCNpDDIaa4ZSnz00u7//Bw==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Culture = _t, Date = _t, Index = _t, Year = _t, #"Year Reverse" = _t, #"Month Number" = _t, #"Month Name" = _t, #"Abbeviated Month Name" = _t, #"Month Name Initials" = _t, #"Start of Month" = _t, #"End of Month" = _t, #"Month Index" = _t, #"Month Year" = _t, #"Day of Month" = _t, #"Day of Year" = _t, #"Day of Week" = _t, #"Day of Week Name" = _t, #"Abbreviated Day of Week Name" = _t, #"Day of Week Name Initials" = _t, #"Week of Year" = _t, #"Year ISO" = _t, #"Start of Week" = _t, #"End Of Week" = _t, #"Week Index" = _t, #"Week Year" = _t, #"Quarter of Year" = _t, #"Quarter of Year Name" = _t, #"Start of Quarter" = _t, #"End of Quarter" = _t, #"Quarter Index" = _t, #"Quarter Year" = _t, #"Semester of Year" = _t, #"Semester of Year Index" = _t, #"Semester Year" = _t, #"Two Months of Year" = _t, #"Two Months of Year Index" = _t, #"Two Months Year" = _t, #"Fiscal Year" = _t, #"Offset Date" = _t, #"Offset Week" = _t, #"Offset Month" = _t, #"Offset Quarter" = _t, #"Offset Year" = _t, Holiday = _t, #"Is Working Day" = _t, #"Working Day Name" = _t, Season = _t]),
+    ColumnNamesTb = Table.RemoveColumns (
+        Table.SelectRows ( ColumnNamesTbInput, each [Culture] = Culture ),
+        "Culture"
+    ),
+    // Table of reference key words. Input new rows for your missing desired culture.
+    KeywordsTbInput = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("bZI7bsMwDIavIniOD9HEcZ/Io85jCDIwMZMItSWXkoz2CL1Ct7ZTh47duvlipZS4SIIOhH5SMvmB/heLCFU8zaJONOcYc/TBWCQWPSAlayhYXmqdi5RkDs/+paYHqbYiCdlAq/i8QnbHZ+bKMnRKofBd5lLtO2cV8eto2VlElY27977EMeEYNW9mreEwHvbjM3yyEKcoCUQGyvrrRIJoXq0sDnrQfGgx3eeZdgFghsRVFkNntfLiWtVIQY1IlsAJBAw0cT87YPT8LZi1O6OYSf4UTSDwHZLmC8QdrDTBqsC2MNAntXYXjAJh7tA23y2K/JdlQ3EaVoIlSOWbjB2QDct5f3RoTrG6WokaVU6YS05vtCOhXd0ChDxHQVhpcwTUvNjmk88LXk0ZplzJOvwdpuH/VFYm0OQYJ/0jewy9OxSLW0bAgz0c19gfKC1sfU9asTQnyYZv+dEk1P4coo8cgurYIyk1P7si2GT5Cw==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Culture = _t, Week = _t, Quarter = _t, Easter = _t, Carnival = _t, #"Good Friday" = _t, #"Working Day" = _t, #"Non-Working Day" = _t, Hemisphere = _t, Summer = _t, Fall = _t, Winter = _t, Spring = _t]),
+    KeywordsTb = Table.RemoveColumns ( Table.SelectRows ( KeywordsTbInput, each [Culture] = Culture ), "Culture" ),
+    WeekPrefix = KeywordsTb{0}[Week],
+    QuarterPrefix = KeywordsTb{0}[Quarter],
+    EasterName = KeywordsTb{0}[Easter],
+    CarnivalName = KeywordsTb{0}[Carnival],
+    GoodfridayName = KeywordsTb{0}[Good Friday],
+    WorkingDayName = KeywordsTb{0}[Working Day],
+    NonWorkingDayName = KeywordsTb{0}[#"Non-Working Day"],
+    Hemisphere = KeywordsTb{0}[Hemisphere],
+    SummerName = KeywordsTb{0}[Summer],
+    FallName = KeywordsTb{0}[Fall],
+    WinterName = KeywordsTb{0}[Winter],
+    SpringName = KeywordsTb{0}[Spring],
+    // Special character to order text columns. As example: Month Year.
+    ZeroWidthSpace = Character.FromNumber ( 8203 ),
+    DurationDays = Duration.Days ( EndDate - StartDate ) + 1,
+    ListOfDates = List.Buffer (
+        List.Dates ( StartDate, DurationDays, #duration ( 1, 0, 0, 0 ) )
+    ),
+    TableOfDates = Table.FromList (
+        ListOfDates,
+        Splitter.SplitByNothing(),
+        type table [ Date = Date.Type ]
+    ),
+    AddIndex = Table.AddIndexColumn ( TableOfDates, "Index", 1, 1, Int64.Type ),
+    AddYear = Table.AddColumn (
+        AddIndex,
+        "Year",
+        each Date.Year ( [Date] ),
+        Int64.Type
+    ),
+    AddYearReverse = Table.AddColumn (
+        AddYear,
+        "Year Reverse",
+        let
+            yearStartDate = Date.Year ( StartDate)
+        in
+            each Text.Repeat ( ZeroWidthSpace, ( [Year] - yearStartDate + 1  ) )
+                & Text.From ( [Year] ),
+        type text
+    ),
+    AddMonthNumber = Table.AddColumn (
+        AddYearReverse,
+        "Month Number",
+        each Date.Month ( [Date] ),
+        Int64.Type
+    ),
+    AddMonthName = Table.AddColumn (
+        AddMonthNumber,
+        "Month Name",
+        each Text.Repeat ( ZeroWidthSpace, 12 - [Month Number] )
+            & Date.MonthName ( [Date], Culture ),
+        type text
+    ),
+    AddAbbeviatedMonthName = Table.AddColumn (
+        AddMonthName,
+        "Abbeviated Month Name",
+        each Text.Repeat ( ZeroWidthSpace, 12 - [Month Number] )
+            & Text.Start ( Date.MonthName ( [Date], Culture ), 3 ),
+        type text
+    ),
+    AddMonthNameInitials = Table.AddColumn (
+        AddAbbeviatedMonthName,
+        "Month Name Initials",
+        each Text.Repeat ( ZeroWidthSpace, 12 - [Month Number] )
+            & Text.Start ( Date.MonthName ( [Date], Culture ), 1 ),
+        type text
+    ),
+    AddStartOfMonth = Table.AddColumn (
+        AddMonthNameInitials,
+        "Start of Month",
+        each Date.StartOfMonth ( [Date] ),
+        type date
+    ),
+    AddEndOfMonth = Table.AddColumn (
+        AddStartOfMonth,
+        "End of Month",
+        each Date.EndOfMonth ( [Date] ),
+        type date
+    ),
+    AddMonthIndex = Table.AddColumn (
+        AddEndOfMonth,
+        "Month Index",
+        each ( Date.Year ( [Date] ) - Date.Year ( StartDate ) )
+            * 12 + [Month Number],
+        Int64.Type
+    ),
+    AddMonthYear = Table.AddColumn (
+        AddMonthIndex,
+        "Month Year",
+        let
+            maxIndex = ( Date.Year ( EndDate ) - Date.Year ( StartDate ) )
+                * 12 + Date.Month ( EndDate )
+        in
+            each
+                let
+                    indexReverse = maxIndex - [Month Index]
+                in
+                    Text.Repeat ( ZeroWidthSpace, indexReverse )
+                        & Text.Start ( Date.MonthName ( [Date], Culture ), 3 )
+                        & Delimiter
+                        & Text.End ( Text.From ( [Year] ), 2 ), 
+        type text
+    ),
+    AddDayOfMonth = Table.AddColumn (
+        AddMonthYear,
+        "Day of Month",
+        each Date.Day ( [Date] ),
+        Int64.Type
+    ),
+    AddDayOfYear = Table.AddColumn (
+        AddDayOfMonth,
+        "Day of Year",
+        each Date.DayOfYear ( [Date] ),
+        Int64.Type
+    ),
+    AddDayOfWeek = Table.AddColumn (
+        AddDayOfYear,
+        "Day of Week",
+        each Date.DayOfWeek ( [Date], Day.Monday ) + 1,
+        Int64.Type
+    ),
+    AddDayOfWeekName = Table.AddColumn (
+        AddDayOfWeek,
+        "Day of Week Name",
+        each Text.Repeat ( ZeroWidthSpace, 7 - [Day of Week] + 1 )
+            & Date.DayOfWeekName ( [Date], Culture ),
+        type text
+    ),
+    AddAbbeviatedDayOfWeekName = Table.AddColumn (
+        AddDayOfWeekName,
+        "Abbreviated Day of Week Name",
+        each Text.Repeat ( ZeroWidthSpace, 7 - [Day of Week] + 1 )
+            & Text.Start ( Date.DayOfWeekName ( [Date], Culture ), 3 ),
+        type text
+    ),
+    AddDayOfWeekNameInitials = Table.AddColumn (
+        AddAbbeviatedDayOfWeekName,
+        "Day of Week Name Initials",
+        each Text.Repeat ( ZeroWidthSpace, 7 - [Day of Week] + 1 )
+            & Text.Start ( Date.DayOfWeekName ( [Date], Culture ), 1 ),
+        type text
+    ),
+    AddWeekOfYear = Table.AddColumn (
+        AddDayOfWeekNameInitials,
+        "Week of Year",
+        each
+            let
+                thursdayOnCurrentWeek = Date.AddDays (
+                    [Date],
+                    3 - Date.DayOfWeek ( [Date], Day.Monday )
+                ),
+                startOfYearOfThursdayOnCurrentWeek = #date (
+                    Date.Year ( thursdayOnCurrentWeek ),
+                    1,
+                    1
+                ),
+                durationDays = Duration.Days (
+                    thursdayOnCurrentWeek - startOfYearOfThursdayOnCurrentWeek
+                )
+            in
+                Number.IntegerDivide ( durationDays, 7, 0 ) + 1,
+        Int64.Type
+    ),
+    AddYearISO = Table.AddColumn (
+        AddWeekOfYear,
+        "Year ISO",
+        each Date.Year ( Date.AddDays ( [Date], 26 - [Week of Year] ) ),
+        Int64.Type
+    ),
+    AddStartOfWeek = Table.AddColumn (
+        AddYearISO,
+        "Start of Week",
+        each Date.StartOfWeek ( [Date], Day.Monday ),
+        type date
+    ),
+    AddEndOfWeek = Table.AddColumn (
+        AddStartOfWeek,
+        "End Of Week",
+        each Date.EndOfWeek ( [Date], Day.Monday ),
+        type date
+    ),
+    WeekIndexTable = Table.AddIndexColumn (
+        Table.Distinct (
+            Table.SelectColumns ( AddEndOfWeek, { "Start of Week" } )
+        ),
+        "Week Index",
+        1,
+        1,
+        Int64.Type
+    ),
+    MaxWeekIndex = List.Max ( WeekIndexTable[Week Index] ),
+    AddWeekIndex = Table.Join (
+        AddEndOfWeek,
+        "Start of Week",
+        WeekIndexTable,
+        "Start of Week"
+    ),
+    AddWeekYear = Table.AddColumn (
+        AddWeekIndex,
+        "Week Year",
+        each Text.Repeat ( ZeroWidthSpace, MaxWeekIndex - [Week Index] + 1 )
+            & WeekPrefix
+            & Text.PadStart ( Text.From ( [Week of Year] ), 2, "0" )
+            & Delimiter
+            &  Text.End ( Text.From ( [Year ISO] ), 2 ),
+        type text
+    ),
+    AddQuarterOfYear = Table.AddColumn (
+        AddWeekYear,
+        "Quarter of Year",
+        each Date.QuarterOfYear ( [Date] ),
+        Int64.Type
+    ),
+    AddQuarterOfYearName = Table.AddColumn (
+        AddQuarterOfYear,
+        "Quarter of Year Name",
+        each QuarterPrefix & Text.From ( [Quarter of Year] ),
+        type text
+    ),
+    AddStartOfQuarter = Table.AddColumn (
+        AddQuarterOfYearName,
+        "Start of Quarter",
+        each Date.StartOfQuarter ( [Date] ),
+        type date
+    ),
+    AddEndOfQuarter = Table.AddColumn (
+        AddStartOfQuarter,
+        "End of Quarter",
+        each Date.EndOfQuarter ( [Date] ),
+        type date
+    ),
+    AddQuarterIndex = Table.AddColumn (
+        AddEndOfQuarter,
+        "Quarter Index",
+        each ( Date.Year ( [Date] ) - Date.Year ( StartDate ) )
+            * 4 + [Quarter of Year],
+        Int64.Type
+    ),
+    AddQuarterYear = Table.AddColumn (
+        AddQuarterIndex,
+        "Quarter Year",
+        let
+            maxIndex = ( Date.Year ( EndDate ) - Date.Year ( StartDate ) )
+                * 4 + Date.QuarterOfYear ( EndDate )
+        in
+            each
+                let
+                    indexReverse = maxIndex - [Quarter Index]
+                in
+                    Text.Repeat ( ZeroWidthSpace, indexReverse )
+                        & [Quarter of Year Name]
+                        & Delimiter
+                        & Text.End ( Text.From ( [Year] ), 2 ),
+        type text
+    ),
+    AddSemesterOfYear = Table.AddColumn (
+        AddQuarterYear,
+        "Semester of Year",
+        each if [Month Number] >= 6 then 2 else 1,
+        Int64.Type
+    ),
+    AddSemesterOfYearIndex = Table.AddColumn (
+        AddSemesterOfYear,
+        "Semester of Year Index",
+        each ( Date.Year ( [Date] ) - Date.Year ( StartDate ) )
+            * 2 + [Semester of Year],
+        Int64.Type
+    ),
+    AddNameOfSemesterYear = Table.AddColumn (
+        AddSemesterOfYearIndex,
+        "Semester Year",
+        let
+            maxIndex = ( Date.Year ( EndDate ) - Date.Year ( StartDate ) )
+                * 2 + 2
+        in
+            each
+                let
+                    indexReverse = maxIndex - [Semester of Year Index]
+                in
+                    Text.Repeat ( ZeroWidthSpace, indexReverse )
+                        & Text.From ( [Semester of Year] )
+                        & Delimiter
+                        & Text.End ( Text.From ( [Year] ), 2 ),
+        type text
+    ),
+    AddTwoMonthsOfYear = Table.AddColumn (
+        AddNameOfSemesterYear,
+        "Two Months of Year",
+        each Number.IntegerDivide ( [Month Number], 2 )
+            + Number.Mod ( [Month Number], 2 ),
+        Int64.Type
+    ),
+    AddTwoMonthsOfYearIndex = Table.AddColumn (
+        AddTwoMonthsOfYear,
+        "Two Months of Year Index",
+        each ( Date.Year ( [Date] ) - Date.Year ( StartDate ) )
+            * 6 + [Two Months of Year],
+        Int64.Type
+    ),
+    AddNameOfTwoMonthsYear = Table.AddColumn (
+        AddTwoMonthsOfYearIndex,
+        "Two Months Year",
+        let
+            maxIndex = ( Date.Year ( EndDate ) - Date.Year ( StartDate ) )
+                * 6 + 6
+        in
+            each
+                let
+                    indexReverse = maxIndex - [Two Months of Year Index]
+                in
+                    Text.Repeat ( ZeroWidthSpace, indexReverse )
+                        & Text.From ( [Two Months of Year] )
+                        & Delimiter
+                        & Text.End ( Text.From ( [Year] ), 2 ), 
+        type text
+    ),
+    AddFiscalYear = Table.AddColumn (
+        AddNameOfTwoMonthsYear,
+        "Fiscal Year",
+        each
+            let
+                startFiscalYear =
+                    if [Month Number] >= MonthOfStartFiscalYear then
+                        [Year]
+                    else
+                        [Year] - 1
+            in
+                Number.ToText ( startFiscalYear )
+                    & "/"
+                    & Number.ToText ( startFiscalYear + 1 ),
+        type text
+    ),
+    AddOffsetDate = Table.AddColumn (
+        AddFiscalYear,
+        "Offset Date",
+        each Number.From ( [Date] - CurrentDate ),
+        Int64.Type
+    ),
+    AddOffsetWeek = Table.AddColumn (
+        AddOffsetDate,
+        "Offset Week",
+        each Number.From (
+            [Start of Week] - Date.StartOfWeek ( CurrentDate, Day.Monday )
+        )
+            / 7,
+        Int64.Type
+    ),
+    AddOffsetMonth = Table.AddColumn (
+        AddOffsetWeek,
+        "Offset Month",
+        each
+            let
+                row = [Year] * 12 - 1 + [Month Number],
+                current = Date.Year ( CurrentDate )
+                    * 12 - 1 + Date.Month ( CurrentDate )
+            in
+                row - current,
+        Int64.Type
+    ),
+    AddOffsetQuarter = Table.AddColumn (
+        AddOffsetMonth,
+        "Offset Quarter",
+        each
+            let
+                row = [Year] * 4 - 1 + [Quarter of Year],
+                current = Date.Year ( CurrentDate )
+                    * 4 - 1 + Date.QuarterOfYear ( CurrentDate )
+            in
+                row - current,
+        Int64.Type
+    ),
+    AddOffsetYear = Table.AddColumn (
+        AddOffsetQuarter,
+        "Offset Year",
+        each
+            let
+                row = [Year],
+                current = Date.Year ( CurrentDate )
+            in
+                row - current,
+        Int64.Type
+    ),
+    DistinctYears = Table.Distinct (
+        Table.SelectColumns ( AddMonthNumber, "Year" )
+    ),
+    // Create movable holiday based on Easter date
+    MovableHolidaysTable = Table.SelectColumns (
+        Table.ExpandTableColumn (
+            Table.AddColumn (
+                DistinctYears,
+                "Holiday",
+                each
+                    let
+                        x = 24,
+                        y = 5,
+                        a = Number.Mod ( [Year], 19 ),
+                        b = Number.Mod ( [Year], 4 ),
+                        c = Number.Mod ( [Year], 7 ),
+                        d = Number.Mod ( 19 * a + x, 30 ),
+                        e = Number.Mod (
+                            ( ( 2 * b ) + ( 4 * c ) + ( 6 * d ) + y ),
+                            7
+                        ),
+                        day = if ( d + e ) > 9 then d + e - 9 else d + e + 22,
+                        month = if ( d + e ) > 9 then 4 else 3,
+                        easter = #date ( [Year], month, day )
+                    in
+                        Table.FromRecords (
+                            {
+                                [
+                                    Date = Date.AddDays ( easter, - 47 ),
+                                    Holiday = CarnivalName
+                                ],
+                                [
+                                    Date = Date.AddDays ( easter, - 2 ),
+                                    Holiday = GoodfridayName
+                                ],
+                                [ Date = easter, Holiday = EasterName ],
+                                [
+                                    Date = Date.AddDays ( easter, 60 ),
+                                    Holiday = "Corpus Christi"
+                                ]
+                            }
+                        ),
+                type table [ Date = Date.Type, Holiday = Text.Type ]
+            ),
+            "Holiday",
+            { "Date", "Holiday" }
+        ),
+        { "Date", "Holiday" }
+    ),
+    FixedHolidaysTable = Table.SelectColumns (
+        Table.AddColumn (
+            Table.ExpandListColumn (
+                Table.AddColumn (
+                    FixedHolidaysInput,
+                    "Year",
+                    each DistinctYears[Year]
+                ),
+                "Year"
+            ),
+            "Date",
+            each #date (
+                [Year],
+                Number.From ( [Month] ),
+                Number.From ( [Day] )
+            ),
+            type date
+        ),
+        { "Date", "Holiday" }
+    ),
+    AllHolydaysTable = Table.Combine ( { MovableHolidaysTable, FixedHolidaysTable } ),
+    AddHolidaysToMain = Table.AddColumn (
+        AddOffsetYear,
+        "Holiday",
+        each try
+
+                let
+                    Date = [Date]
+                in
+                    Table.SelectRows ( AllHolydaysTable, each [Date] = Date )[
+                        Holiday
+                    ]{0}
+        otherwise
+            null,
+        type text
+    ),
+    AddIsWorkingDay = Table.AddColumn (
+        AddHolidaysToMain,
+        "Is Working Day",
+        each
+            if [Holiday] = null and List.Contains ( { 1 .. 5 }, [Day of Week] ) then
+                1
+            else
+                0,
+        Int64.Type
+    ),
+    AddWorkingDayName = Table.AddColumn (
+        AddIsWorkingDay,
+        "Working Day Name",
+        each if [Is Working Day] = 1 then WorkingDayName else NonWorkingDayName,
+        type text
+    ),
+    AddSeason = Table.AddColumn (
+        AddWorkingDayName,
+        "Season",
+        if Hemisphere = "North" then
+            each
+                if [Date] < #date ( [Year], 3, 20 ) then
+                    WinterName
+                else if [Date] < #date ( [Year], 6, 20 ) then
+                    ZeroWidthSpace
+                else if [Date] < #date ( [Year], 9, 22 ) then
+                    SummerName
+                else if [Date] < #date ( [Year], 12, 21 ) then
+                    FallName
+                else
+                    WinterName
+        else
+            each
+                if [Date] < #date ( [Year], 3, 20 ) then
+                    SummerName
+                else if [Date] < #date ( [Year], 6, 20 ) then
+                    FallName
+                else if [Date] < #date ( [Year], 9, 22 ) then
+                    WinterName
+                else if [Date] < #date ( [Year], 12, 21 ) then
+                    ZeroWidthSpace
+                else
+                    WinterName,
+        type text
+    ),
+    fxModifyCapitalizationTextColumns =
+        if TextCaptalization = 1 then
+            Text.Proper
+        else if TextCaptalization = 2 then
+            Text.Upper
+        else if TextCaptalization = 3 then
+            Text.Lower
+        else if TextCaptalization = 4 then
+            Text.From
+        else
+            Text.From,
+    TextFieldsModified = Table.TransformColumns (
+        AddSeason,
+        {
+            { "Month Name", fxModifyCapitalizationTextColumns, type text },
+            {
+                "Abbeviated Month Name",
+                fxModifyCapitalizationTextColumns,
+                type text
+            },
+            {
+                "Month Name Initials",
+                fxModifyCapitalizationTextColumns,
+                type text
+            },
+            { "Month Year", fxModifyCapitalizationTextColumns, type text },
+            { "Day of Week Name", fxModifyCapitalizationTextColumns, type text },
+            {
+                "Abbreviated Day of Week Name",
+                fxModifyCapitalizationTextColumns,
+                type text
+            },
+            {
+                "Day of Week Name Initials",
+                fxModifyCapitalizationTextColumns,
+                type text
+            },
+            { "Holiday", fxModifyCapitalizationTextColumns, type text },
+            { "Working Day Name", fxModifyCapitalizationTextColumns, type text },
+            { "Season", fxModifyCapitalizationTextColumns, type text }
+        }
+    ),
+    ListToRename = Table.AddColumn (
+        Table.UnpivotOtherColumns ( ColumnNamesTb, {}, "From", "To" ),
+        "FromTo",
+        each Record.FieldValues ( _ )
+    )[FromTo],
+    RenamedColumns = Table.RenameColumns ( TextFieldsModified, ListToRename )
+in
+    RenamedColumns
