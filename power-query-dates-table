@@ -536,7 +536,7 @@ let
                 if [Date] < #date ( [Year], 3, 20 ) then
                     WinterName
                 else if [Date] < #date ( [Year], 6, 20 ) then
-                    ZeroWidthSpace
+                    SpringName
                 else if [Date] < #date ( [Year], 9, 22 ) then
                     SummerName
                 else if [Date] < #date ( [Year], 12, 21 ) then
@@ -552,9 +552,9 @@ let
                 else if [Date] < #date ( [Year], 9, 22 ) then
                     WinterName
                 else if [Date] < #date ( [Year], 12, 21 ) then
-                    ZeroWidthSpace
+                    SpringName
                 else
-                    WinterName,
+                    SummerName,
         type text
     ),
     fxModifyCapitalizationTextColumns =
