@@ -19,6 +19,11 @@ We are just starting. The best is coming!<br>
 <br>
 ## Main files of this repository
 Dates Table / Dimensão Calendário: [power-query-dates-table](https://github.com/alisonpezzott/powerbi/blob/main/power-query-dates-table)<br>
+- Credits:
+  - ISO Weeks and ISO YEAR: Calendar based on weeks by Rick de Groot: [Create ISO Week and ISO Year in Power Query M (ISO 8601) (gorilla.bi)](https://gorilla.bi/power-query/create-iso-week-and-iso-year/#final-code-iso-week)
+  - Zero Widht Space Character by Patrick on Channel Hoosier BI: [Video: No Sort Date Tables](https://youtu.be/E0oe7k0UXXY)
+  - Eclesiastics Calculation of Easter Date by Dr. Roberto Cabral de Mello Borges UFRGS - Porto Alegre - Brazil. [Scientific Paper](https://www.inf.ufrgs.br/~cabral/Pascoa.html)
+<br>
 Hours Table / Dimensão Horas:  [power-query-time-table](https://github.com/alisonpezzott/powerbi/blob/main/power-query-time-table)<br>
 
 
