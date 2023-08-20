@@ -18,7 +18,7 @@ let
     // Default: 15
     DayOfStartFiscalYear = 15,
     // 1-Capitalized / 2-Upper / 3-Lower / 4-Culture Default
-    TextCaptalization = 1,
+    TextCapitalization = 1,
     // Demiliter of the columns with separator as example month/year. Default: "/"
     Delimiter = "/",
     // Input here your fixed holidays table.
@@ -558,13 +558,13 @@ let
         type text
     ),
     fxModifyCapitalizationTextColumns =
-        if TextCaptalization = 1 then
+        if TextCapitalization = 1 then
             Text.Proper
-        else if TextCaptalization = 2 then
+        else if TextCapitalization = 2 then
             Text.Upper
-        else if TextCaptalization = 3 then
+        else if TextCapitalization = 3 then
             Text.Lower
-        else if TextCaptalization = 4 then
+        else if TextCapitalization = 4 then
             Text.From
         else
             Text.From,
