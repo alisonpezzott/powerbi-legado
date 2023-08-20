@@ -4,10 +4,10 @@ let
     Culture = "en-US",
     // Define the StartDate.
     // You can use List.Min(FactTable[Date]) as reference.
-    StartDate = Date.StartOfYear ( #date(2021, 1, 1) ),
+    StartDate = Date.StartOfYear ( #date ( 2023, 1, 1 )  ),
     // Define the EndDate. 
     // You can use List.Max(FactTable[Date]) as reference.
-    EndDate = Date.EndOfYear ( #date(2023, 12, 31) ),
+    EndDate = Date.EndOfYear ( #date ( 2023, 12, 31 ) ),
     // Define the CurrentDate. 
     // You can use List.Max(FactTable[Date]) as reference.
     CurrentDate = Date.From ( DateTime.LocalNow() ),
@@ -79,7 +79,7 @@ let
         AddYear,
         "Year Reverse",
         let
-            yearStartDate = Date.Year ( StartDate)
+            yearStartDate = Date.Year ( StartDate )
         in
             each Text.Repeat ( ZeroWidthSpace, ( [Year] - yearStartDate + 1  ) )
                 & Text.From ( [Year] ),
@@ -367,13 +367,14 @@ let
         each
             let
                 startFiscalYear =
-                    if [Month Number] >= MonthOfStartFiscalYear then
-                        [Year]
-                    else
-                        [Year] - 1
+                    if [Month Number] > MonthOfStartFiscalYear
+                    then [Year]
+                    else if [Month Number] = MonthOfStartFiscalYear and [Day of Month] >= DayOfStartFiscalYear 
+                        then [Year]
+                        else [Year] - 1
             in
                 Number.ToText ( startFiscalYear )
-                    & "/"
+                    & Delimiter
                     & Number.ToText ( startFiscalYear + 1 ),
         type text
     ),
@@ -428,7 +429,7 @@ let
         Int64.Type
     ),
     DistinctYears = Table.Distinct (
-        Table.SelectColumns ( AddMonthNumber, "Year" )
+        Table.SelectColumns ( AddOffsetYear, "Year" )
     ),
     // Create movable holiday based on Easter date
     MovableHolidaysTable = Table.SelectColumns (
