@@ -4,7 +4,7 @@ let
     Culture = "en-US",
     PeriodsNamesInput = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("VY89EgIhDIXvQr0cAmfXTgt/qp0t4pIFCsIOwnggLWw9AxeTsDZWecl8eXkZR4Ekr2fRiR4eVMshRHJkqlJLwkgh8PTojE1i6kaxJrk7MQc6ZgMamiZbnlVcIGpkPLiEDce7HNhdeSCcMTa6fIDgD5/thi9R7tld5Rs2NDk+r9ZY3nfpnXaMZ7dl0Sj7gaOXl/cYc4tdHzDYMsNsvUsJzK+pS9MX", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Culture = _t, Dawn = _t, Morning = _t, Afternoon = _t, Night = _t]),
     PeriodsTb = Table.RemoveColumns ( Table.SelectRows ( PeriodsNamesInput, each [Culture] = Culture ), "Culture" ),
-    ColumnNamesTbInput = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("jZFNTsMwEIWvYnndSBUb9k2KQAipamDTkIUbTxtLsadybCjcgUOwgiy4ATtfDMf57Y7VzDx73mc9ZxkFFT2ldEHvFIezr49CArmHN9+mhmlD8EAehLIG5sotWu3nvkznUKDivtmAFshpvsjoyUSrrZfch+KigLCl3ac/J3HJXlohRgnuCwlHIlsrnGuMlKhZt8YGGAbY0SqOHc39oG9bHtTROr3gxZXHEA7ECJCn3lyAevfuUF0gJ3W8+0/sQUc32y7Hgeqa2tfENXtrWrwcYpqk6tkul1fXJVgdkunrGGgC9izct2z7jWvaUCHgOETJevZtOxCmLsrK/dY1VKMF2cNRKAUqfJ5/N5BVUMZ5Ttu9ehfo3TSzkub5Hw==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Culture = _t, Index = _t, #"Time Key" = _t, #"Start of Minute" = _t, #"Start of Hour" = _t, Hour = _t, Minute = _t, Second = _t, Period = _t]),
+    ColumnNamesTbInput = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("lZFNTsMwEIWvYmXdSBUb1jQpAqFIUQObhi7ceNpYij2VY0PhDhyCFWTBDdj5Ythpfpes5vnZns9+k+cByPApCxbBvWRwdvWRCyAP8OZkpqnSBA8k4dJomDp3aJRbd2XchwIlcyIFxdGLm4SkSbBb5MFJh6uNc+yHZLyA9rayn+4ciUr64o0IBdgvJAyJ8C1x6lFSoqKXa7SHYgs9GsnwQrU/2MqRC3W4zmbcqHI4woBoDuLUQTjId0eBaoYe3eHsP/EHFd5uLvn2dNvUrsa22RvtnyH6+EarejbL5dV1CUa1SXV1CDoGc+b2W3id2saHDTMsgzBeT8a6Ba7roqzsb11DNbQiezhyKUG2w3X/ALJqnWE9pW5fXRfouilqxIjc/QE=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Culture = _t, Index = _t, #"Time Key" = _t, #"Start of Minute" = _t, #"Start of Hour" = _t, Hour = _t, Minute = _t, Second = _t, Period = _t, #"AM PM" = _t]),
     ColumnNamesTb = Table.RemoveColumns (
         Table.SelectRows ( ColumnNamesTbInput, each [Culture] = Culture ),
         "Culture"
@@ -70,8 +70,9 @@ let
             else ZeroWidthSpace & NightName, 
         type text 
     ),
+    AddAmPm = Table.AddColumn ( AddPeriod, "AM PM", each if [Hour] < 12 then "AM" else "PM", type text ),
     ReorderedColumns = Table.ReorderColumns(
-        AddPeriod,
+        AddAmPm,
         {
             "Index", 
             "Time Key", 
@@ -80,7 +81,8 @@ let
             "Hour", 
             "Minute", 
             "Second", 
-            "Period"
+            "Period",
+            "AM PM"
         }
     ),
     ListToRename = Table.AddColumn (
