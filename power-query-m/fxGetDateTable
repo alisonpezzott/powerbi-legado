@@ -228,12 +228,12 @@ in
             ])         
     ) as table 
     meta [
-        Documentation.Name = "fxGenerateDateTable",
+        Documentation.Name = "Power Query function to generate date table by Alison Pezzott - version: 2.0.1",
         //Documentation.Description = "", 
-        Documentation.LongDescription = "Power Query function to generate date table by Alison Pezzott - version: 2.0.1",
+        Documentation.LongDescription = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetDateTable",
         Documentation.Category = "Function", 
         Documentation.Version = "2.0.1",
-        Documentation.Source = "https://github.com/alisonpezzott/powerbi/blob/main/calendar", 
+        Documentation.Source = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetDateTable", 
         Documentation.Author = "Alison Pezzott", 
         Documentation.Examples = {[
             Description =  "Follow me on my Youtube channel and my social networking!", 
