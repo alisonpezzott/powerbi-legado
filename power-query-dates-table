@@ -1,17 +1,25 @@
 let
+    GenerateDateTable = ( language as text, optional columnOfDates as list, optional inputStartDate as date, optional inputEndDate as date, optional monthStartFiscalYear as number, optional holidaysTable as table  ) as table =>
+let
     //input Parameters
-    language = "en-US",
-    inputStartDate = #date(2023, 1, 1), 
-    inputEndDate = #date(2025, 12, 31),
-    delimiter = "/",
-    monthStartFiscalYear = 3,
-    holidaysTable = Table.FromRecords ( {[ Date = #date(Date.Year(startDate) ,12 ,25 ), Holiday = "Christmas" ]}, type table [ Date=_d, Holiday=_t ] ),
-    
+    //language = "en-US",
+    //inputStartDate = #date(2023, 1, 1), 
+    //inputEndDate = #date(2025, 12, 31),
+    //monthStartFiscalYear = 3,
+    //holidaysTable = Table.FromRecords ( {[ Date = #date(Date.Year(startDate) ,12 ,25 ), Holiday = "Christmas" ]}, type table [ Date=_d, Holiday=_t ] ),
+
     //auxiliary parameters
     currentDate = Date.From ( DateTime.FixedLocalNow () ),
-    startDate =  Date.StartOfYear ( inputStartDate ), 
-    endDate = Date.EndOfYear  (inputEndDate ),
+    startDate =  
+        if columnOfDates <> null then Date.StartOfYear ( List.Min ( columnOfDates ) )
+        else if inputStartDate <> null then Date.StartOfYear ( inputStartDate )
+        else Date.StartOfYear ( currentDate ), 
+    endDate = 
+         if columnOfDates <> null then Date.EndOfYear ( List.Max ( columnOfDates ) )
+        else if inputEndDate <> null then Date.StartOfYear ( inputEndDate )
+        else Date.EndOfYear ( currentDate ),
     zeroWidthSpace = Character.FromNumber ( 8203 ),
+    delimiter = "/",
 
     //types
     _i = Int64.Type,
@@ -50,7 +58,7 @@ let
     InitialTable = Table.FromList (
         CheckCurrent,
         Splitter.SplitByNothing(), 
-        type table [ Date = _tb ] 
+        type table [ Date = _d ] 
     ),
 
     AddIndex = Table.AddIndexColumn ( InitialTable, "Index", 1, 1, _i ),
@@ -135,7 +143,7 @@ let
                     Quarter Name = quarterPrefix & Text.From ( [Quarter] ),
                     Quarter Year = Text.Repeat ( zeroWidthSpace, maxQuarterIndex - [Quarter Index] ) & quarterPrefix & Text.From ( [Quarter] ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
                     Year Descending = Text.Repeat ( zeroWidthSpace, ( [Year] - yearStartDate + 1  ) ) & Text.From ( [Year] ),
-                    Fiscal Year = if [Month] >= monthStartFiscalYear then [Year] else [Year] - 1
+                    Fiscal Year = try if [Month] >= monthStartFiscalYear then [Year] else [Year] - 1 otherwise null
                 ],
                 type [ Day Of Week Name =_t, Day of Week Name Short = _t, Day of Week Name Initial = _t, Month Name = _t, Month Name Short = _t, Month Name Initial = _t, Month Year = _t, Week Year ISO = _t, Quarter Name = _t, Quarter Year = _t, Year Descending = _t, Fiscal Year = _i ]
             ),
@@ -186,3 +194,5 @@ let
 
 in
     RenamedColumns
+in
+    GenerateDateTable
