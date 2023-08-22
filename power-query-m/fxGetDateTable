@@ -47,16 +47,8 @@ let
     totalRows = Duration.Days ( endDate - startDate ) + 1,
     DatesList = List.Dates ( startDate, totalRows, #duration ( 1, 0, 0, 0 ) ),
 
-    //input the current date in the first or last row case the current date is out of the range
-    CheckCurrent = 
-        if currentDate >= startDate and currentDate <= endDate 
-            then DatesList
-            else if currentDate < startDate 
-                then  List.Combine ( { {currentDate}, DatesList } ) 
-                    else List.Combine ( { DatesList, { currentDate } } ),
-
     InitialTable = Table.FromList (
-        CheckCurrent,
+        DatesList,
         Splitter.SplitByNothing(), 
         type table [ Date = _d ] 
     ),
