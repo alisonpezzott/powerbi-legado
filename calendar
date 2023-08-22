@@ -10,14 +10,21 @@ let
     currentDate = Date.From ( DateTime.FixedLocalNow () ),
     startDate =  Date.StartOfYear ( inputStartDate ), 
     endDate = Date.EndOfYear  (inputEndDate ),
+    zeroWidthSpace = Character.FromNumber ( 8203 ),
+    weekPrefix = "W", 
+    quarterPrefix = "Q", 
+
+    //types
     _i = Int64.Type,
     _t = Text.Type,
     _d = Date.Type,
     _tb = Table.Type,
 
+    //start of generate data
     totalRows = Duration.Days ( endDate - startDate ) + 1,
     DatesList = List.Dates ( startDate, totalRows, #duration ( 1, 0, 0, 0 ) ),
 
+    //input the current date in the first or last row case the current date is out of the range
     CheckCurrent = 
         if currentDate >= startDate and currentDate <= endDate 
             then DatesList
@@ -31,89 +38,82 @@ let
         type table [ Date = _tb ] 
     ),
 
+
     AddIndex = Table.AddIndexColumn ( InitialTable, "Index", 1, 1, _i ),
-    AddDayOfMonth = Table.AddColumn ( AddIndex, "Day of Month" , each Date.Day ( [Date] ), _i ),
-    AddDayOfYear = Table.AddColumn ( AddDayOfMonth, "Day of Year", each Date.DayOfYear ( [Date] ), _i ),
-    AddDayOfWeek = Table.AddColumn ( AddDayOfYear, "Day of Week", each Date.DayOfWeek ( [Date], Day.Monday ) + 1, _i ),
-    AddMonth = Table.AddColumn ( AddDayOfWeek, "Month", each Date.Month ( [Date] ), _i ),
-    AddStartOfMonth = Table.AddColumn ( AddMonth, "Start of Month", each Date.StartOfMonth ( [Date] ), _d ),
-    AddEndOfMonth = Table.AddColumn ( AddStartOfMonth, "End of Month", each Date.EndOfMonth ( [Date] ), _d ),
-    AddQuarter = Table.AddColumn ( AddEndOfMonth, "Quarter", each Date.QuarterOfYear ( [Date] ), _i ),
-    AddStartOfQuarter = Table.AddColumn ( AddQuarter, "Start of Quarter", each Date.StartOfQuarter ( [Date] ), _d ),
-    AddEndOfQuarter = Table.AddColumn ( AddStartOfQuarter, "End of Quarter", each Date.EndOfQuarter ( [Date] ), _d ),
-    AddYear = Table.AddColumn ( AddEndOfQuarter, "Year", each Date.Year ( [Date] ), _i ),
-    AddStartOfYear = Table.AddColumn(AddYear, "Start of Year", each Date.StartOfYear ( [Date] ), _d),
-    AddEndOfYear = Table.AddColumn ( AddStartOfYear, "End of Year", each Date.EndOfYear ( [Date] ), _d ),      
-    
-    AddISOWeek = Table.AddColumn ( 
-        AddEndOfYear, 
-        "ISO Week",
-        each  
-            let 
-                thursdayInWeek = Date.AddDays ( [Date], 3 - [Day of Week] ), 
-                yearThursdayInWeek = #date ( Date.Year ( thursdayInWeek ), 1, 1 ), 
-                difDays = Duration.Days ( thursdayInWeek - yearThursdayInWeek )  
-            in 
-                Number.IntegerDivide ( difDays, 7, 0 ) + 1,
-        _i
+
+    AddingOnlyStepColumns = Table.AddColumn (
+        AddIndex,
+        "OnlyOneStepColumns", each [
+            Day of Month = Date.Day ( [Date] ),
+            Day of Year = Date.DayOfYear ( [Date] ), 
+            Day of Week = Date.DayOfWeek ( [Date], Day.Monday ) + 1,
+            Month = Date.Month ( [Date] ),
+            Start of Month = Date.StartOfMonth ( [Date] ),
+            End of Month = Date.EndOfMonth ( [Date] ),
+            Month Index = ( Date.Year ( [Date] ) - Date.Year ( startDate ) ) * 12 + Date.Month ( [Date] ),
+            Quarter = Date.QuarterOfYear ( [Date] ),
+            Start of Quarter = Date.StartOfQuarter ( [Date] ),
+            End of Quarter = Date.EndOfQuarter ( [Date] ),
+            Quarter Index = ( Date.Year ( [Date] ) - Date.Year ( startDate ) ) * 4 + Date.QuarterOfYear ( [Date] ),
+            Year = Date.Year ( [Date] ), 
+            Start of Year = Date.StartOfYear ( [Date] ),
+            End of Year = Date.EndOfYear ( [Date] ),
+            Year Index = Date.Year ( [Date] ) - Date.Year ( startDate ) + 1,
+            Week ISO = 
+                let 
+                    thursdayInWeek = Date.AddDays ( [Date], 3 - Date.DayOfWeek ( [Date], Day.Monday ) ), 
+                    yearThursdayInWeek = #date ( Date.Year ( thursdayInWeek ), 1, 1 ), 
+                    difDays = Duration.Days ( thursdayInWeek - yearThursdayInWeek )  
+                in 
+                    Number.IntegerDivide ( difDays, 7, 0 ) + 1,
+            Start of Week = Date.StartOfWeek ( [Date], Day.Monday ),
+            End of Week = Date.EndOfWeek ( [Date], Day.Monday ),
+            Days from Now = Number.From ( [Date] - currentDate ),
+            Months from Now =
+                let
+                    row = Date.Year ( [Date] ) * 12 - 1 + Date.Month ( [Date] ),
+                    current = Date.Year ( currentDate ) * 12 - 1 + Date.Month ( currentDate )
+                in
+                    row - current,
+            Quarters from Now = 
+                let
+                    row = Date.Year ( [Date] ) * 4 - 1 + Date.QuarterOfYear ( [Date] ),
+                    current = Date.Year ( currentDate ) * 4 - 1 + Date.QuarterOfYear ( currentDate )
+                in
+                    row - current,
+            Years from Now =  Date.Year ( [Date] ) -  Date.Year ( currentDate ),
+            Weeks from Now =  Number.From ( Date.StartOfWeek ( [Date], Day.Monday ) - Date.StartOfWeek ( currentDate, Day.Monday ) ) / 7
+        ],
+        type [ Day of Month = _i, Day of Year = _i, Day of Week = _i, Month = _i, Start of Month = _d, End of Month = _d, Month Index = _i, Quarter = _i, Start of Quarter = _d, End of Quarter = _d, Quarter Index = _i, Year = _i, Start of Year = _d, End of Year = _d, Year Index = _i, Week ISO = _i, Start of Week = _d, End of Week = _d, Days from Now = _i, Months from Now = _i, Quarters from Now = _i, Years from Now = _i, Weeks from Now = _i ] 
     ),
-    AddStartOfISOWeek = Table.AddColumn ( AddISOWeek, "Start of ISO Week", each Date.StartOfWeek ( [Date], Day.Monday ), _d ),
-    AddEndOfISOWeek = Table.AddColumn ( AddStartOfISOWeek, "End of ISO Week", each Date.EndOfWeek ( [Date], Day.Monday ), _d ),
-    
-    AddISOYear =  Table.AddColumn ( AddEndOfISOWeek, "ISO Year", each Date.Year ( Date.AddDays ( [Date], 26 -  [ISO Week] ) ), _i ),
-    AddStartOfISOYear = Table.AddColumn ( 
-        AddISOYear, 
-        "Start of ISO Year", 
-        each 
-            let
-                isoYear = [ISO Year], 
-                isoWeek = [ISO WEEK],
-                pyStartDate =  Date.AddYears ( startDate, -1 ),
-                pyEndDate = Date.AddDays ( pyStartDate, 7 ),
-                pyDuration = Duration.Days ( pyEndDate - pyStartDate ) + 1,
-                previousYear = Table.FromList (
-                    List.Dates ( 
-                        pyStartDate, 
-                        pyDuration,
-                        #duration (1, 0, 0, 0)
-                    ),
-                    Splitter.SplitByNothing(),
-                    type table [Date = _d]
-                ),
 
-                ifNotNull =  List.Min ( Table.SelectRows ( AddISOYear, each [ISO Week] = 1 and [ISO Year] = isoYear )[Start of ISO Week] ),
-                ifNull = List.Min ( Table.SelectRows ( previousYear, each Date.DayOfWeek ( [Date], Day.Monday ) + 1 = 1 )[Date] )
-            in 
-                if ifNotNull is null then ifNull else ifNotNull, _d ),
-    
-    AddEndOfISOYear = Table.AddColumn ( 
-        AddStartOfISOYear, 
-        "End of ISO Year", 
-        each 
-            let
-                isoYear = [ISO Year], 
-                isoWeek = [ISO WEEK],
-                nyStartDate =  Date.AddYears ( startDate, 1 ),
-                nyEndDate = Date.AddDays ( nyStartDate, 7 ),
-                nyDuration = Duration.Days ( nyEndDate - nyStartDate ) + 1,
-                nextYear = Table.FromList (
-                    List.Dates ( 
-                        nyStartDate, 
-                        nyDuration,
-                        #duration (1, 0, 0, 0)
-                    ),
-                    Splitter.SplitByNothing(),
-                    type table [Date = _d]
-                ),
+    ExpandedOnlyOneStepColumns = Table.Buffer ( Table.ExpandRecordColumn(AddingOnlyStepColumns, "OnlyOneStepColumns", {"Day of Month", "Day of Year", "Day of Week", "Month", "Start of Month", "End of Month", "Month Index", "Quarter", "Start of Quarter", "End of Quarter", "Quarter Index", "Year", "Start of Year", "End of Year", "Year Index", "Week ISO", "Start of Week", "End of Week", "Days from Now", "Months from Now", "Quarters from Now", "Years from Now", "Weeks from Now"}, {"Day of Month", "Day of Year", "Day of Week", "Month", "Start of Month", "End of Month", "Month Index", "Quarter", "Start of Quarter", "End of Quarter", "Quarter Index", "Year", "Start of Year", "End of Year", "Year Index", "Week ISO", "Start of Week", "End of Week", "Days from Now", "Months from Now", "Quarters from Now", "Years from Now", "Weeks from Now"}) ),
 
-                ifNotNull =  List.Max ( Table.SelectRows ( AddISOYear, each [ISO Year] = isoYear )[End of ISO Week] ),
-                ifNull = List.Max ( Table.SelectRows ( nextYear, each Date.DayOfWeek ( [Date], Day.Monday ) + 1 = 7 )[Date] )
-            in 
-                if ifNotNull is null then ifNull else ifNotNull, _d ),
-    
-    
-    
-    AddISOMonth = Table.AddColumn ( AddEndOfISOYear, "ISO Month", each let isoYear = [ISO Year], isoWeek = [ISO Week], result = List.Min ( Table.SelectRows ( AddStartOfISOYear, each [ISO Year] = isoYear and [ISO Week] = isoWeek and [Day of Week] = 4  )[Date] ) in if result is null then 12 else Date.Month ( result ), _i ),
-    AddISOQuarter = Table.AddColumn ( AddISOMonth, "ISO Quarter", each let isoYear = [ISO Year], isoWeek = [ISO Week], result = List.Min ( Table.SelectRows ( AddStartOfISOYear, each [ISO Year] = isoYear and [ISO Week] = isoWeek and [Day of Week] = 4  )[Date] ) in if result is null then 4 else Date.QuarterOfYear ( result ), _i )
+    ExtractingWeekIndex = 
+        let 
+            colStartOfWeek = Table.SelectColumns ( ExpandedOnlyOneStepColumns, "Start of Week" ),
+            colDistinct = Table.Distinct ( colStartOfWeek ),
+            addedIndex = Table.AddIndexColumn ( colDistinct, "Week Index", 1, 1, _i )
+        in
+            Table.Join ( ExpandedOnlyOneStepColumns, {"Start of Week"}, addedIndex, {"Start of Week"} ),
+
+    maxWeekIndex = List.Max ( List.Buffer ( ExtractingWeekIndex[Week Index] ) ),
+
+    AddingYearISO = Table.AddColumn ( ExtractingWeekIndex, "Year ISO", each Date.Year ( Date.AddDays ( [Date], 26 - [Week ISO] ) ), _i ),
+
+    AddingComplexColums = Table.AddColumn (
+        AddingYearISO,
+        "ComplexColumns",
+        each [
+            Day Of Week Name = Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Proper ( Date.DayOfWeekName ( [Date], language ) ),
+            Day of Week Name Short =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 3 ),
+            Day of Week Name Initial =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 1 ), 
+            Month Name = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Proper ( Date.MonthName ( [Date], language ) ),
+            Month Name Short = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ),
+            Month Name Initial = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 1 ),
+            Month Year = let maxIndex = ( Date.Year ( endDate ) - Date.Year ( startDate ) ) * 12 + 12  in Text.Repeat ( zeroWidthSpace, maxIndex - [Month Index] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
+            Week Year ISO = Text.Repeat ( zeroWidthSpace, maxWeekIndex - [Week Index] ) & weekPrefix & Text.PadStart ( Text.From ( [Week ISO] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year ISO] ), 2 )
+        ]
+    )
 in
-    AddISOQuarter
+    AddingComplexColums
