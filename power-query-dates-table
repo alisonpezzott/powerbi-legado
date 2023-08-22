@@ -189,10 +189,49 @@ let
             else listColumnsEN,
     
     RenamedColumns = Table.RenameColumns ( ReorderedColumns,  List.Zip ( { ColumnNames, NewColumnNames } ) )
-
-
-
 in
-    RenamedColumns
+    RenamedColumns,
+
+    //Faz a restrição dos parâmetros de entrada e personaliza as mensagens na função de entrada
+    ParametrosValidos =
+        let
+            FnValidos = type function(
+                language as ( type text meta [ 
+                        Documentation.AllowedValues = {"en-US", "pt-BR", "es-ES", "fr-FR"},
+                        Documentation.FieldCaption = "Language",
+                        Documentation.FieldDescription = "Idioma que servirá de base para geração dos nomes das colunas da tabela, nomes dos meses, dias da semana e demais textos. Para a utilização de outros novos idiomas, faça a inclusão dos dados nas tabelas CalendarioPrefixos e CalendariosNomesColunas. Se não selecionado será utilizado o português do Brasil."
+                    ]),
+                optional columnOfDates as ( type list meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "Column Reference of Dates",
+                        Documentation.FieldDescription = "Coluna da tabela fato utilizada referência para geração da tabela calendário no modo automático. É possível utilizar ""DatasFatos[Datas]"" que é uma query que recebe a combinação de todas as colunas tipo data do modelo. Inclua entre as chaves da etapa ""Fonte"" da query ""DatasFatos"" quais colunas deverão ser utilizadas como referência. Por exemplo: Fonte = List.Buffer( List.Distinct( List.Combine({FtExemplo[Data], FtExemplo[DataConclusao]}))). Atenção para possíveis erros das tabelas fatos. Se nenhuma coluna for especificada, as datas iniciais e finais serão a primeira e última data do ano atual."
+                    ]),
+                optional inputStartDate as ( type date meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "Start Date",
+                        Documentation.FieldDescription = "Data inicial para o modo manual."
+                    ]),
+                optional inputEndDate as ( type date meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "End Date",
+                        Documentation.FieldDescription = "Data final para o modo manual."          
+                    ]),
+                optional monthStartFiscalYear as ( type number meta [ 
+                        Documentation.AllowedValues = { 1..12 },
+                        Documentation.FieldCaption = "Mês Inicial do Ano Fiscal",
+                        Documentation.FieldDescription = "Número correpondente ao mês em que se inicia cada ano fiscal. Se não informado o padrão será 4."
+                    ]),
+                optional holidaysTable as ( type table meta [ 
+                        //Documentation.AllowedValues = "",
+                        Documentation.FieldCaption = "Holidays Table",
+                        Documentation.FieldDescription = "Coluna da tabela fato utilizada referência para geração da tabela calendário no modo automático. É possível utilizar ""DatasFatos[Datas]"" que é uma query que recebe a combinação de todas as colunas tipo data do modelo. Inclua entre as chaves da etapa ""Fonte"" da query ""DatasFatos"" quais colunas deverão ser utilizadas como referência. Por exemplo: Fonte = List.Buffer( List.Distinct( List.Combine({FtExemplo[Data], FtExemplo[DataConclusao]}))). Atenção para possíveis erros das tabelas fatos. Se nenhuma coluna for especificada, as datas iniciais e finais serão a primeira e última data do ano atual."
+                    ])         
+            ) as table meta[],
+            //     Documentation.Name = "DimCalendario por Alison Pezzott",
+            //     Documentation.LongDescription = "Script para geração de uma tabela DimCalendario completa e personalizada"
+            // ],
+            AtribuiMetadados = Value.ReplaceType( GenerateDateTable, FnValidos ) 
+        in
+            AtribuiMetadados
 in
-    GenerateDateTable
+    ParametrosValidos
