@@ -18,12 +18,12 @@ Follow me on my social networks: <br>
 We are just starting. The best is coming!<br>
 <br>
 ## Main files of this repository
-powerbi/power-query-m/fxGetDatetable (Calendário) 👉  https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetDateTable
+powerbi/power-query-m/fxGetDateTable (Calendário) 👉  https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetDateTable
 <br>
 > Credits:
 > - ISO Weeks and ISO YEAR: Calendar based on weeks by Rick de Groot: [Create ISO Week and ISO Year in Power Query M (ISO 8601) (gorilla.bi)](https://gorilla.bi/power-query/create-iso-week-and-iso-year/#final-code-iso-week)
 > - Zero Widht Space Character by Patrick on Channel Hoosier BI: [Video: No Sort Date Tables](https://youtu.be/E0oe7k0UXXY)
 
-Hours Table / Dimensão Horas: [power-query-time-table](https://github.com/alisonpezzott/powerbi/blob/main/power-query-time-table)
+powerbi/power-query-m/fxGetTimeTable (Horas) 👉 https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetTimeTable 
 
 
