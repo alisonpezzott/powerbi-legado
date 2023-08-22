@@ -1,15 +1,15 @@
-//let
-//    GetTimeTable = ( language as text ) as table =>
+let
+   GetTimeTable = ( language as text ) as table =>
 let
     // input parameters
-    language = "en-US",
+    // language = "en-US",
     
     //types
     _i = Int64.Type,
     _t = Text.Type,
     _d = Date.Type,
     _tb = Table.Type,
-    _tm = Time.type,
+    _tm = Time.Type,
 
     //keywords by language
     languagePrefixes = Table.FromRecords (
@@ -48,6 +48,7 @@ let
     ),
     AddCustomColumns = Table.AddColumn (
         AddTimeKey,
+        "Custom Columns", 
         each [
             Start of Minute = #time ( Time.Hour ( [Time Key ] ), Time.Minute ( [Time Key] ) , 0 ),
             Start of Hour = Time.StartOfHour ( [Time Key] ),
@@ -55,40 +56,12 @@ let
             Minute = Time.Minute ( [Time Key] ),
             Second =  Time.Second ( [Time Key] )
         ],
-        type table  [Start of Minute = _tm, Start of Hour = _tm, Hour = _i, Minute = _i, Second = _i ]
+        type [Start of Minute = _tm, Start of Hour = _tm, Hour = _i, Minute = _i, Second = _i ]
     ),
-    // AddStartOfMinute = Table.AddColumn ( 
-    //     AddTimeKey, 
-    //     "Start of Minute", 
-    //     each #time ( Time.Hour ( [Time Key ] ), Time.Minute ( [Time Key] ) , 0 ), 
-    //     type time 
-    // ),
-    // AddStartOfHour = Table.AddColumn ( 
-    //     AddStartOfMinute, 
-    //     "Start of Hour", 
-    //     each Time.StartOfHour ( [Time Key] ), 
-    //     type time 
-    // ),
-    // AddHour = Table.AddColumn ( 
-    //     AddStartOfHour, 
-    //     "Hour", 
-    //     each Time.Hour ( [Time Key] ), 
-    //     Int64.Type 
-    // ),
-    // AddMinute = Table.AddColumn ( 
-    //     AddHour, 
-    //     "Minute", 
-    //     each Time.Minute ( [Time Key] ),  
-    //     Int64.Type 
-    // ),
-    // AddSecond = Table.AddColumn ( 
-    //     AddMinute, 
-    //     "Second", 
-    //     each Time.Second ( [Time Key] ), 
-    //     Int64.Type 
-    // ),
+    ExpandedCustomColumns = Table.ExpandRecordColumn(AddCustomColumns, "Custom Columns", {"Start of Minute", "Start of Hour", "Hour", "Minute", "Second"}, {"Start of Minute", "Start of Hour", "Hour", "Minute", "Second"}),
+
     AddPeriod = Table.AddColumn ( 
-        AddSecond, 
+        ExpandedCustomColumns, 
         "Period", 
         each     if [Hour] <  6 then Text.Repeat ( zeroWidthSpace, 4 ) & dawn 
             else if [Hour] < 12 then Text.Repeat ( zeroWidthSpace, 3 ) & morning
@@ -98,34 +71,54 @@ let
     ),
     AddAmPm = Table.AddColumn ( AddPeriod, "AM PM", each if [Hour] < 12 then "AM" else "PM", type text ),
 
-    ReorderedColumns = Table.ReorderColumns(
-        AddAmPm,
-        {
-            "Index", 
-            "Time Key", 
-            "Start of Minute", 
-            "Start of Hour", 
-            "Hour", 
-            "Minute", 
-            "Second", 
-            "Period",
-            "AM PM"
-        }
-    ),
+    ReorderedColumns = Table.ReorderColumns ( AddAmPm, { "Index", "Time Key", "Start of Minute", "Start of Hour", "Hour", "Minute", "Second", "Period", "AM PM" } ),
 
-    ColumnNamesEn = { "Index", "Time Key", "Start of Minute", "Start of Hour", "Hour", "Minute", "Second", "Period", "AM PM" },
-    ColumnNamesPt = { "Índice", "Horário Chave", "Início do minuto", "Início da hora", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
-    ColumnsNamesEs = { "Índice", "Clave de tiempo", "Comienzo del minuto", "Comienzo del tiempo", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
-    ColumnsNamesFr = { "Indice", "Clés", "Début de minute", "Début de l'heure", "Heure", "Minute", "Deuxième", "Période", "AM PM" },
+    ColumnNames = Table.ColumnNames ( ReorderedColumns ),
 
-
-
+    listColumnsEN = { "Index", "Time Key", "Start of Minute", "Start of Hour", "Hour", "Minute", "Second", "Period", "AM PM" },
+    listColumnsPT = { "Índice", "Horário Chave", "Início do minuto", "Início da hora", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
+    listColumnsES = { "Índice", "Clave de tiempo", "Comienzo del minuto", "Comienzo del tiempo", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
+    listColumnsFR = { "Indice", "Clés", "Début de minute", "Début de l'heure", "Heure", "Minute", "Deuxième", "Période", "AM PM" },
     
-    ListToRename = Table.AddColumn (
-        Table.UnpivotOtherColumns ( ColumnNamesTb, {}, "From", "To" ),
-        "FromTo",
-        each Record.FieldValues ( _ )
-    )[FromTo],
-    RenamedColumns = Table.RenameColumns ( ReorderedColumns, ListToRename )
+    NewColumnNames = 
+        let
+            listColumnsEN = { "Index", "Time Key", "Start of Minute", "Start of Hour", "Hour", "Minute", "Second", "Period", "AM PM" },
+            listColumnsPT = { "Índice", "Horário", "Início do minuto", "Início da hora", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
+            listColumnsES = { "Índice", "Tiempo", "Comienzo del minuto", "Comienzo del tiempo", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
+            listColumnsFR = { "Indice", "Clés", "Début de minute", "Début de l'heure", "Heure", "Minute", "Deuxième", "Période", "AM PM" }
+        in
+            if language = "en-US" then listColumnsEN
+            else if language = "pt-BR" then listColumnsPT
+            else if language = "es-ES" then listColumnsES
+            else if language = "fr-FR" then listColumnsFR
+            else listColumnsEN,
+    
+    RenamedColumns = Table.RenameColumns ( ReorderedColumns,  List.Zip ( { ColumnNames, NewColumnNames } ) )
 in
-    RenamedColumns
+    RenamedColumns,
+
+    //Constraints e Documentation
+    
+    Documentation = type function(
+        language as ( type text meta [ 
+                Documentation.AllowedValues = {"en-US", "pt-BR", "es-ES", "fr-FR"},
+                Documentation.FieldCaption = "Language",
+                Documentation.FieldDescription = " Select the language to genereate the time table with column names and period names, and other texts fields. "
+            ])
+    ) as table 
+    meta [
+        Documentation.Name = "Power Query function to get time table by Alison Pezzott - version: 1.0.1",
+        //Documentation.Description = "", 
+        Documentation.LongDescription = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetTimeTable",
+        Documentation.Category = "Function", 
+        Documentation.Version = "1.0.1",
+        Documentation.Source = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetTimeTable", 
+        Documentation.Author = "Alison Pezzott", 
+        Documentation.Examples = {[
+            Description =  "Follow me on my Youtube channel and my social networking!", 
+            Code = "", 
+            Result = "Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)Instagram: https://www.instagram.com/alisonpezzott#(lf)Github: https://github.com/alisonpezzott#(lf)Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)If you need support, please contact me through these above channels." 
+        ]}
+    ]
+in 
+    Value.ReplaceType ( GetTimeTable,  Documentation )
