@@ -1,5 +1,5 @@
 let
-    GenerateDateTable = ( language as text, optional columnOfDates as list, optional inputStartDate as date, optional inputEndDate as date, optional monthStartFiscalYear as number, optional holidaysTable as table  ) as table =>
+    GetDateTable = ( language as text, optional columnOfDates as list, optional inputStartDate as date, optional inputEndDate as date, optional monthStartFiscalYear as number, optional holidaysTable as table  ) as table =>
 let
     //input Parameters
     //language = "en-US",
@@ -16,7 +16,7 @@ let
         else Date.StartOfYear ( currentDate ), 
     endDate = 
          if columnOfDates <> null then Date.EndOfYear ( List.Max ( columnOfDates ) )
-        else if inputEndDate <> null then Date.StartOfYear ( inputEndDate )
+        else if inputEndDate <> null then Date.EndOfYear ( inputEndDate )
         else Date.EndOfYear ( currentDate ),
     zeroWidthSpace = Character.FromNumber ( 8203 ),
     delimiter = "/",
@@ -192,46 +192,54 @@ let
 in
     RenamedColumns,
 
-    //Faz a restrição dos parâmetros de entrada e personaliza as mensagens na função de entrada
-    ParametrosValidos =
-        let
-            FnValidos = type function(
-                language as ( type text meta [ 
-                        Documentation.AllowedValues = {"en-US", "pt-BR", "es-ES", "fr-FR"},
-                        Documentation.FieldCaption = "Language",
-                        Documentation.FieldDescription = "Idioma que servirá de base para geração dos nomes das colunas da tabela, nomes dos meses, dias da semana e demais textos. Para a utilização de outros novos idiomas, faça a inclusão dos dados nas tabelas CalendarioPrefixos e CalendariosNomesColunas. Se não selecionado será utilizado o português do Brasil."
-                    ]),
-                optional columnOfDates as ( type list meta [ 
-                        //Documentation.AllowedValues = "",
-                        Documentation.FieldCaption = "Column Reference of Dates",
-                        Documentation.FieldDescription = "Coluna da tabela fato utilizada referência para geração da tabela calendário no modo automático. É possível utilizar ""DatasFatos[Datas]"" que é uma query que recebe a combinação de todas as colunas tipo data do modelo. Inclua entre as chaves da etapa ""Fonte"" da query ""DatasFatos"" quais colunas deverão ser utilizadas como referência. Por exemplo: Fonte = List.Buffer( List.Distinct( List.Combine({FtExemplo[Data], FtExemplo[DataConclusao]}))). Atenção para possíveis erros das tabelas fatos. Se nenhuma coluna for especificada, as datas iniciais e finais serão a primeira e última data do ano atual."
-                    ]),
-                optional inputStartDate as ( type date meta [ 
-                        //Documentation.AllowedValues = "",
-                        Documentation.FieldCaption = "Start Date",
-                        Documentation.FieldDescription = "Data inicial para o modo manual."
-                    ]),
-                optional inputEndDate as ( type date meta [ 
-                        //Documentation.AllowedValues = "",
-                        Documentation.FieldCaption = "End Date",
-                        Documentation.FieldDescription = "Data final para o modo manual."          
-                    ]),
-                optional monthStartFiscalYear as ( type number meta [ 
-                        Documentation.AllowedValues = { 1..12 },
-                        Documentation.FieldCaption = "Mês Inicial do Ano Fiscal",
-                        Documentation.FieldDescription = "Número correpondente ao mês em que se inicia cada ano fiscal. Se não informado o padrão será 4."
-                    ]),
-                optional holidaysTable as ( type table meta [ 
-                        //Documentation.AllowedValues = "",
-                        Documentation.FieldCaption = "Holidays Table",
-                        Documentation.FieldDescription = "Coluna da tabela fato utilizada referência para geração da tabela calendário no modo automático. É possível utilizar ""DatasFatos[Datas]"" que é uma query que recebe a combinação de todas as colunas tipo data do modelo. Inclua entre as chaves da etapa ""Fonte"" da query ""DatasFatos"" quais colunas deverão ser utilizadas como referência. Por exemplo: Fonte = List.Buffer( List.Distinct( List.Combine({FtExemplo[Data], FtExemplo[DataConclusao]}))). Atenção para possíveis erros das tabelas fatos. Se nenhuma coluna for especificada, as datas iniciais e finais serão a primeira e última data do ano atual."
-                    ])         
-            ) as table meta[],
-            //     Documentation.Name = "DimCalendario por Alison Pezzott",
-            //     Documentation.LongDescription = "Script para geração de uma tabela DimCalendario completa e personalizada"
-            // ],
-            AtribuiMetadados = Value.ReplaceType( GenerateDateTable, FnValidos ) 
-        in
-            AtribuiMetadados
-in
-    ParametrosValidos
+
+    //Constraints e Documentation
+    
+    Documentation = type function(
+        language as ( type text meta [ 
+                Documentation.AllowedValues = {"en-US", "pt-BR", "es-ES", "fr-FR"},
+                Documentation.FieldCaption = "Language",
+                Documentation.FieldDescription = " Select the language to genereate the data table with column names, month names, names of week day and all the other texts fields. "
+            ]),
+        optional columnOfDates as ( type list meta [ 
+                //Documentation.AllowedValues = "",
+                Documentation.FieldCaption = "Column Reference of Dates",
+                Documentation.FieldDescription = " Caution! Large FactTables can cause slowness on load of the data. "
+            ]),
+        optional inputStartDate as ( type date meta [ 
+                //Documentation.AllowedValues = "",
+                Documentation.FieldCaption = "Start Date",
+                Documentation.FieldDescription = " Define the start date if you didn't define th read of a column above. "
+            ]),
+        optional inputEndDate as ( type date meta [ 
+                //Documentation.AllowedValues = "",
+                Documentation.FieldCaption = "End Date",
+                Documentation.FieldDescription = " Define the start date. "          
+            ]),
+        optional monthStartFiscalYear as ( type number meta [ 
+                Documentation.AllowedValues = { 1..12 },
+                Documentation.FieldCaption = "Month of Start of Fiscal Year",
+                Documentation.FieldDescription = "Define the number of month of the start of the fiscal years. "
+            ]),
+        optional holidaysTable as ( type table meta [ 
+                //Documentation.AllowedValues = "",
+                Documentation.FieldCaption = "Holidays Table",
+                Documentation.FieldDescription = "A table with just two columns: ""Date"" and ""Holiday"" that it generates the holidays column and impacts the columns of working days. "
+            ])         
+    ) as table 
+    meta [
+        Documentation.Name = "fxGenerateDateTable",
+        //Documentation.Description = "", 
+        Documentation.LongDescription = "Power Query function to generate date table by Alison Pezzott - version: 2.0.1",
+        Documentation.Category = "Function", 
+        Documentation.Version = "2.0.1",
+        Documentation.Source = "https://github.com/alisonpezzott/powerbi/blob/main/calendar", 
+        Documentation.Author = "Alison Pezzott", 
+        Documentation.Examples = {[
+            Description =  "Follow me on my Youtube channel and my social networking!", 
+            Code = "Caution: Use large fact tables to obtain the date reference may cause slowness during load.#(lf)The table to use in the parameter Holidays Table needs to have just two columns: ""Date"" and ""Holiday"". Where Date is the date of the holiday and Holiday is a string with the name of the holiday.", 
+            Result = "Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)Instagram: https://www.instagram.com/alisonpezzott#(lf)Github: https://github.com/alisonpezzott#(lf)Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)If you need support, please contact me through these above channels." 
+        ]}
+    ]
+in 
+    Value.ReplaceType ( GetDateTable,  Documentation )
