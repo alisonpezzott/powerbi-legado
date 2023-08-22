@@ -1,0 +1,131 @@
+//let
+//    GetTimeTable = ( language as text ) as table =>
+let
+    // input parameters
+    language = "en-US",
+    
+    //types
+    _i = Int64.Type,
+    _t = Text.Type,
+    _d = Date.Type,
+    _tb = Table.Type,
+    _tm = Time.type,
+
+    //keywords by language
+    languagePrefixes = Table.FromRecords (
+        {
+            [ Language = "en-US", Dawn = "Dawn"     , Morning = "Morning", Afternoon = "Afternoon"  , Night = "Night" ],
+            [ Language = "pt-BR", Dawn = "Madrugada", Morning = "Manhã"  , Afternoon = "Tarde"      , Night = "Noite" ],
+            [ Language = "es-ES", Dawn = "Amanecer" , Morning = "Mañana" , Afternoon = "Tarde"      , Night = "Noche" ],
+            [ Language = "fr-FR", Dawn = "Aube"     , Morning = "Matin"  , Afternoon = "Après-midi" , Night = "Nuit"  ]
+        },
+        type table [Language =_t, Dawn = _t, Morning = _t, Afternoon = _t, Night = _t ]
+    ),
+    dawn = Table.SelectRows ( languagePrefixes, each [Language]=language )[Dawn]{0},
+    morning = Table.SelectRows ( languagePrefixes, each [Language]=language )[Morning]{0},
+    afternoon = Table.SelectRows ( languagePrefixes, each [Language]=language )[Afternoon]{0},
+    night = Table.SelectRows ( languagePrefixes, each [Language]=language )[Night]{0},
+    zeroWidthSpace = Character.FromNumber ( 8203 ),
+
+    //creating list of time
+    AddIndex = Table.FromList ( 
+        {0..86399}, 
+        Splitter.SplitByNothing(), 
+        type table [ Index = Int64.Type ] 
+    ),
+    AddTimeKey = Table.AddColumn ( 
+        AddIndex, 
+        "Time Key", 
+        each 
+            let 
+                duration = #duration ( 0, 0, 0, [Index] ),
+                hours = Duration.Hours ( duration ),
+                minutes = Duration.Minutes ( duration ),
+                seconds = Duration.Seconds ( duration ) 
+            in
+                #time ( hours, minutes, seconds ),
+        type time
+    ),
+    AddCustomColumns = Table.AddColumn (
+        AddTimeKey,
+        each [
+            Start of Minute = #time ( Time.Hour ( [Time Key ] ), Time.Minute ( [Time Key] ) , 0 ),
+            Start of Hour = Time.StartOfHour ( [Time Key] ),
+            Hour = Time.Hour ( [Time Key] ),
+            Minute = Time.Minute ( [Time Key] ),
+            Second =  Time.Second ( [Time Key] )
+        ],
+        type table  [Start of Minute = _tm, Start of Hour = _tm, Hour = _i, Minute = _i, Second = _i ]
+    ),
+    // AddStartOfMinute = Table.AddColumn ( 
+    //     AddTimeKey, 
+    //     "Start of Minute", 
+    //     each #time ( Time.Hour ( [Time Key ] ), Time.Minute ( [Time Key] ) , 0 ), 
+    //     type time 
+    // ),
+    // AddStartOfHour = Table.AddColumn ( 
+    //     AddStartOfMinute, 
+    //     "Start of Hour", 
+    //     each Time.StartOfHour ( [Time Key] ), 
+    //     type time 
+    // ),
+    // AddHour = Table.AddColumn ( 
+    //     AddStartOfHour, 
+    //     "Hour", 
+    //     each Time.Hour ( [Time Key] ), 
+    //     Int64.Type 
+    // ),
+    // AddMinute = Table.AddColumn ( 
+    //     AddHour, 
+    //     "Minute", 
+    //     each Time.Minute ( [Time Key] ),  
+    //     Int64.Type 
+    // ),
+    // AddSecond = Table.AddColumn ( 
+    //     AddMinute, 
+    //     "Second", 
+    //     each Time.Second ( [Time Key] ), 
+    //     Int64.Type 
+    // ),
+    AddPeriod = Table.AddColumn ( 
+        AddSecond, 
+        "Period", 
+        each     if [Hour] <  6 then Text.Repeat ( zeroWidthSpace, 4 ) & dawn 
+            else if [Hour] < 12 then Text.Repeat ( zeroWidthSpace, 3 ) & morning
+            else if [Hour] < 18 then Text.Repeat ( zeroWidthSpace, 2 ) & afternoon
+            else zeroWidthSpace & night, 
+        type text 
+    ),
+    AddAmPm = Table.AddColumn ( AddPeriod, "AM PM", each if [Hour] < 12 then "AM" else "PM", type text ),
+
+    ReorderedColumns = Table.ReorderColumns(
+        AddAmPm,
+        {
+            "Index", 
+            "Time Key", 
+            "Start of Minute", 
+            "Start of Hour", 
+            "Hour", 
+            "Minute", 
+            "Second", 
+            "Period",
+            "AM PM"
+        }
+    ),
+
+    ColumnNamesEn = { "Index", "Time Key", "Start of Minute", "Start of Hour", "Hour", "Minute", "Second", "Period", "AM PM" },
+    ColumnNamesPt = { "Índice", "Horário Chave", "Início do minuto", "Início da hora", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
+    ColumnsNamesEs = { "Índice", "Clave de tiempo", "Comienzo del minuto", "Comienzo del tiempo", "Hora", "Minuto", "Segundo", "Período", "AM PM" },
+    ColumnsNamesFr = { "Indice", "Clés", "Début de minute", "Début de l'heure", "Heure", "Minute", "Deuxième", "Période", "AM PM" },
+
+
+
+    
+    ListToRename = Table.AddColumn (
+        Table.UnpivotOtherColumns ( ColumnNamesTb, {}, "From", "To" ),
+        "FromTo",
+        each Record.FieldValues ( _ )
+    )[FromTo],
+    RenamedColumns = Table.RenameColumns ( ReorderedColumns, ListToRename )
+in
+    RenamedColumns
