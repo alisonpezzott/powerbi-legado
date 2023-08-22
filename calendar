@@ -1,18 +1,17 @@
 let
     //input Parameters
-    language = "en-US",
+    language = "pt-BR",
     inputStartDate = #date(2023, 1, 1), 
     inputEndDate = #date(2025, 12, 31),
     delimiter = "/",
     monthStartFiscalYear = 3,
-
-    //auxiliar parameters
+    holidaysTable = Table.FromRecords ( {[ Date = #date(Date.Year(startDate) ,12 ,25 ), Holiday = "Christmas" ]}, type table [ Date=_d, Holiday=_t ] ),
+    
+    //auxiliary parameters
     currentDate = Date.From ( DateTime.FixedLocalNow () ),
     startDate =  Date.StartOfYear ( inputStartDate ), 
     endDate = Date.EndOfYear  (inputEndDate ),
     zeroWidthSpace = Character.FromNumber ( 8203 ),
-    weekPrefix = "W", 
-    quarterPrefix = "Q", 
 
     //types
     _i = Int64.Type,
@@ -20,6 +19,22 @@ let
     _d = Date.Type,
     _tb = Table.Type,
 
+    //keywords by language
+    languagePrefixes = Table.FromRecords (
+        {
+            [ Language = "en-US", Week = "W", Quarter = "Q", WorkingDay = "Working Day", NonWorkingDay = "Non-Working Day" ],
+            [ Language = "pt-BR", Week = "S", Quarter = "T", WorkingDay = "Dia Útil", NonWorkingDay = "Dia Não Útil" ],
+            [ Language = "es-ES", Week = "S", Quarter = "C", WorkingDay = "Día Laborable", NonWorkingDay = "Día No Laborable" ],
+            [ Language = "fr-FR", Week = "S", Quarter = "Q", WorkingDay = "Jour Ouvrabvle", NonWorkingDay = "Jour de Repos" ]
+        },
+        type table [Language =_t, Week = _t, Quarter = _t, WorkingDay = _t, NonWorkingDay = _t ]
+    ),
+    weekPrefix = Table.SelectRows ( languagePrefixes, each [Language]=language )[Week]{0},
+    quarterPrefix = Table.SelectRows ( languagePrefixes, each [Language]=language )[Quarter]{0},
+    workingDay = Table.SelectRows ( languagePrefixes, each [Language]=language )[WorkingDay]{0},
+    nonWorkingDay = Table.SelectRows ( languagePrefixes, each [Language]=language )[NonWorkingDay]{0},
+      
+    
     //start of generate data
     totalRows = Duration.Days ( endDate - startDate ) + 1,
     DatesList = List.Dates ( startDate, totalRows, #duration ( 1, 0, 0, 0 ) ),
@@ -37,7 +52,6 @@ let
         Splitter.SplitByNothing(), 
         type table [ Date = _tb ] 
     ),
-
 
     AddIndex = Table.AddIndexColumn ( InitialTable, "Index", 1, 1, _i ),
 
@@ -97,23 +111,58 @@ let
         in
             Table.Join ( ExpandedOnlyOneStepColumns, {"Start of Week"}, addedIndex, {"Start of Week"} ),
 
-    maxWeekIndex = List.Max ( List.Buffer ( ExtractingWeekIndex[Week Index] ) ),
-
     AddingYearISO = Table.AddColumn ( ExtractingWeekIndex, "Year ISO", each Date.Year ( Date.AddDays ( [Date], 26 - [Week ISO] ) ), _i ),
 
-    AddingComplexColums = Table.AddColumn (
-        AddingYearISO,
-        "ComplexColumns",
+    AddingComplexColums = 
+        let
+            maxMonthIndex = ( Date.Year ( endDate ) - Date.Year ( startDate ) ) * 12 + 12,
+            maxWeekIndex = List.Max ( List.Buffer ( ExtractingWeekIndex[Week Index] ) ),
+            maxQuarterIndex = ( Date.Year ( endDate ) - Date.Year ( startDate ) ) * 4 + 4,
+            yearStartDate = Date.Year ( startDate )
+        in
+            Table.AddColumn (
+                AddingYearISO,
+                "ComplexColumns",
+                each [
+                    Day Of Week Name = Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Proper ( Date.DayOfWeekName ( [Date], language ) ),
+                    Day of Week Name Short =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 3 ),
+                    Day of Week Name Initial =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 1 ), 
+                    Month Name = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Proper ( Date.MonthName ( [Date], language ) ),
+                    Month Name Short = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ),
+                    Month Name Initial = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 1 ),
+                    Month Year = Text.Repeat ( zeroWidthSpace, maxMonthIndex - [Month Index] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
+                    Week Year ISO = Text.Repeat ( zeroWidthSpace, maxWeekIndex - [Week Index] ) & weekPrefix & Text.PadStart ( Text.From ( [Week ISO] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year ISO] ), 2 ),
+                    Quarter Name = quarterPrefix & Text.From ( [Quarter] ),
+                    Quarter Year = Text.Repeat ( zeroWidthSpace, maxQuarterIndex - [Quarter Index] ) & quarterPrefix & Text.From ( [Quarter] ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
+                    Year Descending = Text.Repeat ( zeroWidthSpace, ( [Year] - yearStartDate + 1  ) ) & Text.From ( [Year] ),
+                    Fiscal Year = if [Month] >= monthStartFiscalYear then [Year] else [Year] - 1
+                ],
+                type [ Day Of Week Name =_t, Day of Week Name Short = _t, Day of Week Name Initial = _t, Month Name = _t, Month Name Short = _t, Month Name Initial = _t, Month Year = _t, Week Year ISO = _t, Quarter Name = _t, Quarter Year = _t, Year Descending = _t, Fiscal Year = _i ]
+            ),
+    ExpandedComplexColumns = Table.ExpandRecordColumn(AddingComplexColums, "ComplexColumns", {"Day Of Week Name", "Day of Week Name Short", "Day of Week Name Initial", "Month Name", "Month Name Short", "Month Name Initial", "Month Year", "Week Year ISO", "Quarter Name", "Quarter Year", "Year Descending", "Fiscal Year"}, {"Day Of Week Name", "Day of Week Name Short", "Day of Week Name Initial", "Month Name", "Month Name Short", "Month Name Initial", "Month Year", "Week Year ISO", "Quarter Name", "Quarter Year", "Year Descending", "Fiscal Year"}),
+    
+    addHolidaysToTable = Table.AddColumn ( 
+        ExpandedComplexColumns,
+        "Holiday",
+        each 
+            let
+                _date = [Date]
+            in
+                try Table.SelectRows ( holidaysTable, each [Date] = _date )[Holiday]{0}
+                otherwise null,
+            _t
+    ),
+
+    addWorkingDays = Table.AddColumn (
+        addHolidaysToTable,
+        "WorkingDayColumns",
         each [
-            Day Of Week Name = Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Proper ( Date.DayOfWeekName ( [Date], language ) ),
-            Day of Week Name Short =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 3 ),
-            Day of Week Name Initial =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 1 ), 
-            Month Name = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Proper ( Date.MonthName ( [Date], language ) ),
-            Month Name Short = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ),
-            Month Name Initial = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 1 ),
-            Month Year = let maxIndex = ( Date.Year ( endDate ) - Date.Year ( startDate ) ) * 12 + 12  in Text.Repeat ( zeroWidthSpace, maxIndex - [Month Index] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
-            Week Year ISO = Text.Repeat ( zeroWidthSpace, maxWeekIndex - [Week Index] ) & weekPrefix & Text.PadStart ( Text.From ( [Week ISO] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year ISO] ), 2 )
-        ]
-    )
+            Is Working Day = if [Holiday] <> null or List.Contains ( {6..7}, [Day of Week] ) then 0 else 1,
+            Label Working Day = if [Holiday] <> null or List.Contains ( {6..7}, [Day of Week] ) then nonWorkingDay else workingDay
+        ],
+        type [ Is Working Day = _i, Label Working Day = _t ]
+    ),
+    ExpandedWorkingDayColumns = Table.ExpandRecordColumn(addWorkingDays, "WorkingDayColumns", {"Is Working Day", "Label Working Day"}, {"Is Working Day", "Label Working Day"}),
+    #"Reordered Columns" = Table.ReorderColumns(ExpandedWorkingDayColumns,{"Index", "Date", "Day of Month", "Day of Year", "Days from Now", "Day of Week", "Day Of Week Name", "Day of Week Name Short", "Day of Week Name Initial", "Week ISO", "Start of Week", "End of Week", "Weeks from Now", "Week Index", "Week Year ISO", "Month", "Month Name", "Month Name Short", "Month Name Initial", "Month Year", "Start of Month", "End of Month", "Month Index", "Months from Now", "Quarter", "Quarter Name", "Quarter Year", "Start of Quarter", "End of Quarter", "Quarter Index", "Quarters from Now", "Year", "Year ISO", "Year Descending", "Fiscal Year", "Start of Year", "End of Year", "Year Index", "Years from Now", "Holiday", "Is Working Day", "Label Working Day"})
 in
-    AddingComplexColums
+    #"Reordered Columns"
