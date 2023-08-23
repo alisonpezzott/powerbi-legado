@@ -1,0 +1,240 @@
+// let
+//     GetDateTable = ( language as text, optional columnOfDates as list, optional inputStartDate as date, optional inputEndDate as date, optional monthStartFiscalYear as number, optional holidaysTable as table  ) as table =>
+let
+    // input Parameters
+    language = "en-US",
+    inputStartDate = #date(2023, 1, 1), 
+    inputEndDate = #date(2025, 12, 31),
+    monthStartFiscalYear = 3,
+    holidaysTable = "" // Table.FromRecords ( {[ Date = #date(2023,12 ,25 ), Holiday = "Christmas" ]}, type table [ Date=_d, Holiday=_t ] )
+,
+
+    //auxiliary parameters
+    currentDate = Date.From ( DateTime.FixedLocalNow () ),
+    startDate =  
+        Date.StartOfYear ( inputStartDate ) //if columnOfDates <> null then Date.StartOfYear ( List.Min ( columnOfDates ) )
+        //else if inputStartDate <> null then Date.StartOfYear ( inputStartDate )
+       //else Date.StartOfYear ( currentDate )
+, 
+    endDate = 
+         Date.EndOfYear ( inputEndDate )//if columnOfDates <> null then Date.EndOfYear ( List.Max ( columnOfDates ) )
+        //else if inputEndDate <> null then Date.EndOfYear ( inputEndDate )
+        //else Date.EndOfYear ( currentDate )
+,
+    zeroWidthSpace = Character.FromNumber ( 8203 ),
+    delimiter = "/",
+
+    //types
+    _i = Int64.Type,
+    _t = Text.Type,
+    _d = Date.Type,
+    _tb = Table.Type,
+
+    //keywords by language
+    languagePrefixes = Table.FromRecords (
+        {
+            [ Language = "en-US", Week = "W", Quarter = "Q", WorkingDay = "Working Day", NonWorkingDay = "Non-Working Day" ],
+            [ Language = "pt-BR", Week = "S", Quarter = "T", WorkingDay = "Dia Útil", NonWorkingDay = "Dia Não Útil" ],
+            [ Language = "es-ES", Week = "S", Quarter = "C", WorkingDay = "Día Laborable", NonWorkingDay = "Día No Laborable" ],
+            [ Language = "fr-FR", Week = "S", Quarter = "Q", WorkingDay = "Jour Ouvrabvle", NonWorkingDay = "Jour de Repos" ]
+        },
+        type table [Language =_t, Week = _t, Quarter = _t, WorkingDay = _t, NonWorkingDay = _t ]
+    ),
+    weekPrefix = Table.SelectRows ( languagePrefixes, each [Language]=language )[Week]{0},
+    quarterPrefix = Table.SelectRows ( languagePrefixes, each [Language]=language )[Quarter]{0},
+    workingDay = Table.SelectRows ( languagePrefixes, each [Language]=language )[WorkingDay]{0},
+    nonWorkingDay = Table.SelectRows ( languagePrefixes, each [Language]=language )[NonWorkingDay]{0},
+      
+    
+    //start of generate data
+    totalRows = Duration.Days ( endDate - startDate ) + 1,
+    DatesList = List.Dates ( startDate, totalRows, #duration ( 1, 0, 0, 0 ) ),
+
+    InitialTable = Table.FromList (
+        DatesList,
+        Splitter.SplitByNothing(), 
+        type table [ Date = _d ] 
+    ),
+
+    AddIndex = Table.AddIndexColumn ( InitialTable, "Index", 1, 1, _i ),
+
+    AddingOnlyStepColumns = Table.AddColumn (
+        AddIndex,
+        "OnlyOneStepColumns", each [
+            Day of Month = Date.Day ( [Date] ),
+            Day of Year = Date.DayOfYear ( [Date] ), 
+            Day of Week = Date.DayOfWeek ( [Date], Day.Monday ) + 1,
+            Month = Date.Month ( [Date] ),
+            Start of Month = Date.StartOfMonth ( [Date] ),
+            End of Month = Date.EndOfMonth ( [Date] ),
+            Month Index = ( Date.Year ( [Date] ) - Date.Year ( startDate ) ) * 12 + Date.Month ( [Date] ),
+            Quarter = Date.QuarterOfYear ( [Date] ),
+            Start of Quarter = Date.StartOfQuarter ( [Date] ),
+            End of Quarter = Date.EndOfQuarter ( [Date] ),
+            Quarter Index = ( Date.Year ( [Date] ) - Date.Year ( startDate ) ) * 4 + Date.QuarterOfYear ( [Date] ),
+            Year = Date.Year ( [Date] ), 
+            Start of Year = Date.StartOfYear ( [Date] ),
+            End of Year = Date.EndOfYear ( [Date] ),
+            Year Index = Date.Year ( [Date] ) - Date.Year ( startDate ) + 1,
+            Week ISO = 
+                let 
+                    thursdayInWeek = Date.AddDays ( [Date], 3 - Date.DayOfWeek ( [Date], Day.Monday ) ), 
+                    yearThursdayInWeek = #date ( Date.Year ( thursdayInWeek ), 1, 1 ), 
+                    difDays = Duration.Days ( thursdayInWeek - yearThursdayInWeek )  
+                in 
+                    Number.IntegerDivide ( difDays, 7, 0 ) + 1,
+            Start of Week = Date.StartOfWeek ( [Date], Day.Monday ),
+            End of Week = Date.EndOfWeek ( [Date], Day.Monday ),
+            Days from Now = Number.From ( [Date] - currentDate ),
+            Months from Now =
+                let
+                    row = Date.Year ( [Date] ) * 12 - 1 + Date.Month ( [Date] ),
+                    current = Date.Year ( currentDate ) * 12 - 1 + Date.Month ( currentDate )
+                in
+                    row - current,
+            Quarters from Now = 
+                let
+                    row = Date.Year ( [Date] ) * 4 - 1 + Date.QuarterOfYear ( [Date] ),
+                    current = Date.Year ( currentDate ) * 4 - 1 + Date.QuarterOfYear ( currentDate )
+                in
+                    row - current,
+            Years from Now =  Date.Year ( [Date] ) -  Date.Year ( currentDate ),
+            Weeks from Now =  Number.From ( Date.StartOfWeek ( [Date], Day.Monday ) - Date.StartOfWeek ( currentDate, Day.Monday ) ) / 7
+        ],
+        type [ Day of Month = _i, Day of Year = _i, Day of Week = _i, Month = _i, Start of Month = _d, End of Month = _d, Month Index = _i, Quarter = _i, Start of Quarter = _d, End of Quarter = _d, Quarter Index = _i, Year = _i, Start of Year = _d, End of Year = _d, Year Index = _i, Week ISO = _i, Start of Week = _d, End of Week = _d, Days from Now = _i, Months from Now = _i, Quarters from Now = _i, Years from Now = _i, Weeks from Now = _i ] 
+    ),
+
+    ExpandedOnlyOneStepColumns = Table.Buffer ( Table.ExpandRecordColumn(AddingOnlyStepColumns, "OnlyOneStepColumns", {"Day of Month", "Day of Year", "Day of Week", "Month", "Start of Month", "End of Month", "Month Index", "Quarter", "Start of Quarter", "End of Quarter", "Quarter Index", "Year", "Start of Year", "End of Year", "Year Index", "Week ISO", "Start of Week", "End of Week", "Days from Now", "Months from Now", "Quarters from Now", "Years from Now", "Weeks from Now"}, {"Day of Month", "Day of Year", "Day of Week", "Month", "Start of Month", "End of Month", "Month Index", "Quarter", "Start of Quarter", "End of Quarter", "Quarter Index", "Year", "Start of Year", "End of Year", "Year Index", "Week ISO", "Start of Week", "End of Week", "Days from Now", "Months from Now", "Quarters from Now", "Years from Now", "Weeks from Now"}) ),
+
+    ExtractingWeekIndex = 
+        let 
+            colStartOfWeek = Table.SelectColumns ( ExpandedOnlyOneStepColumns, "Start of Week" ),
+            colDistinct = Table.Distinct ( colStartOfWeek ),
+            addedIndex = Table.AddIndexColumn ( colDistinct, "Week Index", 1, 1, _i )
+        in
+            Table.Join ( ExpandedOnlyOneStepColumns, {"Start of Week"}, addedIndex, {"Start of Week"} ),
+
+    AddingYearISO = Table.AddColumn ( ExtractingWeekIndex, "Year ISO", each Date.Year ( Date.AddDays ( [Date], 26 - [Week ISO] ) ), _i ),
+
+    AddingComplexColums = 
+        let
+            maxMonthIndex = ( Date.Year ( endDate ) - Date.Year ( startDate ) ) * 12 + 12,
+            maxWeekIndex = List.Max ( List.Buffer ( ExtractingWeekIndex[Week Index] ) ),
+            maxQuarterIndex = ( Date.Year ( endDate ) - Date.Year ( startDate ) ) * 4 + 4,
+            yearStartDate = Date.Year ( startDate )
+        in
+            Table.AddColumn (
+                AddingYearISO,
+                "ComplexColumns",
+                each [
+                    Day Of Week Name = Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Proper ( Date.DayOfWeekName ( [Date], language ) ),
+                    Day of Week Name Short =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 3 ),
+                    Day of Week Name Initial =  Text.Repeat ( zeroWidthSpace, 7 - [Day of Week] ) & Text.Start ( Text.Proper ( Date.DayOfWeekName ( [Date], language ) ), 1 ), 
+                    Month Name = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Proper ( Date.MonthName ( [Date], language ) ),
+                    Month Name Short = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ),
+                    Month Name Initial = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 1 ),
+                    Month Year = Text.Repeat ( zeroWidthSpace, maxMonthIndex - [Month Index] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
+                    Week Year ISO = Text.Repeat ( zeroWidthSpace, maxWeekIndex - [Week Index] ) & weekPrefix & Text.PadStart ( Text.From ( [Week ISO] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year ISO] ), 2 ),
+                    Quarter Name = quarterPrefix & Text.From ( [Quarter] ),
+                    Quarter Year = Text.Repeat ( zeroWidthSpace, maxQuarterIndex - [Quarter Index] ) & quarterPrefix & Text.From ( [Quarter] ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
+                    Year Descending = Text.Repeat ( zeroWidthSpace, ( [Year] - yearStartDate + 1  ) ) & Text.From ( [Year] ),
+                    Fiscal Year = try if [Month] >= monthStartFiscalYear then [Year] else [Year] - 1 otherwise null
+                ],
+                type [ Day Of Week Name =_t, Day of Week Name Short = _t, Day of Week Name Initial = _t, Month Name = _t, Month Name Short = _t, Month Name Initial = _t, Month Year = _t, Week Year ISO = _t, Quarter Name = _t, Quarter Year = _t, Year Descending = _t, Fiscal Year = _i ]
+            ),
+    ExpandedComplexColumns = Table.ExpandRecordColumn(AddingComplexColums, "ComplexColumns", {"Day Of Week Name", "Day of Week Name Short", "Day of Week Name Initial", "Month Name", "Month Name Short", "Month Name Initial", "Month Year", "Week Year ISO", "Quarter Name", "Quarter Year", "Year Descending", "Fiscal Year"}, {"Day Of Week Name", "Day of Week Name Short", "Day of Week Name Initial", "Month Name", "Month Name Short", "Month Name Initial", "Month Year", "Week Year ISO", "Quarter Name", "Quarter Year", "Year Descending", "Fiscal Year"}),
+    
+    addHolidaysToTable = Table.AddColumn ( 
+        ExpandedComplexColumns,
+        "Holiday",
+        each 
+            let
+                _date = [Date]
+            in
+                try Table.SelectRows ( holidaysTable, each [Date] = _date )[Holiday]{0}
+                otherwise null,
+            _t
+    ),
+
+    addWorkingDays = Table.AddColumn (
+        addHolidaysToTable,
+        "WorkingDayColumns",
+        each [
+            Is Working Day = if [Holiday] <> null or List.Contains ( {6..7}, [Day of Week] ) then 0 else 1,
+            Label Working Day = if [Holiday] <> null or List.Contains ( {6..7}, [Day of Week] ) then nonWorkingDay else workingDay
+        ],
+        type [ Is Working Day = _i, Label Working Day = _t ]
+    ),
+    ExpandedWorkingDayColumns = Table.ExpandRecordColumn(addWorkingDays, "WorkingDayColumns", {"Is Working Day", "Label Working Day"}, {"Is Working Day", "Label Working Day"}),
+    ReorderedColumns = Table.ReorderColumns(ExpandedWorkingDayColumns,{"Index", "Date", "Day of Month", "Day of Year", "Days from Now", "Day of Week", "Day Of Week Name", "Day of Week Name Short", "Day of Week Name Initial", "Week ISO", "Start of Week", "End of Week", "Weeks from Now", "Week Index", "Week Year ISO", "Month", "Month Name", "Month Name Short", "Month Name Initial", "Month Year", "Start of Month", "End of Month", "Month Index", "Months from Now", "Quarter", "Quarter Name", "Quarter Year", "Start of Quarter", "End of Quarter", "Quarter Index", "Quarters from Now", "Year", "Year ISO", "Year Descending", "Fiscal Year", "Start of Year", "End of Year", "Year Index", "Years from Now", "Holiday", "Is Working Day", "Label Working Day"}),
+
+    ColumnNames = Table.ColumnNames ( ReorderedColumns ),
+    
+    NewColumnNames = 
+        let
+            listColumnsEN = { "Index", "Date", "Day of Month", "Day of Year", "Days from Now", "Day of Week", "Day Of Week Name", "Day of Week Name Short", "Day of Week Name Initial", "Week ISO", "Start of Week", "End of Week", "Weeks from Now", "Week Index", "Week Year ISO", "Month", "Month Name", "Month Name Short", "Month Name Initial", "Month Year", "Start of Month", "End of Month", "Month Index", "Months from Now", "Quarter", "Quarter Name", "Quarter Year", "Start of Quarter", "End of Quarter", "Quarter Index", "Quarters from Now", "Year", "Year ISO", "Year Descending", "Fiscal Year", "Start of Year", "End of Year", "Year Index", "Years from Now", "Holiday", "Is Working Day", "Label Working Day" },
+            listColumnsPT = { "Índice", "Data", "Dia do Mês", "Dia do Ano", "Dias até Agora", "Dia da Semana", "Nome do Dia da Semana", "Nome Curto do Dia da Semana", "Iniciais do Nome do Dia da Semana", "Semana ISO", "Início da Semana", "Fim da Semana", "Semanas até Agora", "Índice da Semana", "Ano Semana ISO", "Mês", "Nome do Mês", "Nome Curto do Mês", "Iniciais do Nome do Mês", "Mês Ano", "Início do Mês", "Fim do Mês", "Índice do Mês", "Meses até Agora", "Trimestre", "Nome do Trimestre", "Trimestre Ano", "Início do Trimestre", "Final do Trimestre", "Índice do Trimestre", "Trimestres até Agora", "Ano", "Ano ISO", "Ano Decrescente", "Ano Fiscal", "Início do Ano", "Fim do Ano", "Índice do Ano", "Anos até Agora", "Feriado", "É Dia Útil", "Rótulo Dia Útil" },
+            listColumnsES = { "Índice", "Fecha", "Dia del Mes", "Día del Año", "Días A Partir de Ahora", "Día de La Semana", "Nombre del Día de La Semana", "Día de La Semana Nombre Corto", "Día de La Semana Nombre Inicial", "Semana ISO", "Comienzo de La Semana", "Fin de Semana", "Semanas A Partir de Ahora", "Índice de La Semana", "ISO de La Semana del Año", "Mes", "Nombre de Mes", "Nombre de Mes Corto", "Nombre de Mes Inicial", "Mes Año", "Comienzo del Mes", "Fin de Mes", "Índice de Mensajes", "Meses A Partir de Ahora", "Cuarto", "Nombre del Cuarto", "Cuarto de Año", "Inicio del Cuarto", "Fin de Trimestre", "Índice de Cuartos", "Cuartos de Ahora", "Año", "Año ISO", "Año Descendente", "Año Fiscal", "Comienzo del Año", "Fin de Año", "Índice de Año", "Años A Partir de Ahora", "Día Festivo", "Es El Día de Trabajo", "Día de Trabajo de La Etiqueta" },
+            listColumnsFR = { "Indice", "Date", "Jour du Mois", "Jour de L'année", "Dans Les Jours", "Jour de La Semaine", "Nom du Jour de La Semaine", "Jour de La Semaine Nom Court", "Nom du Jour de La Semaine Initial", "Semaine ISO", "Début de La Semaine", "Fin de Semaine", "Dans Des Semaines", "Indice de La Semaine", "Année de Semaine ISO", "Mois", "Nom du Mois", "Nom du Mois Court", "Nom du Mois Initial", "Mois Année", "Début du Mois", "Fin du Mois", "Indice du Mois", "Dans Des Mois", "Quart", "Quart de Nom", "Trimestre", "Début du Quart", "Fin du Quart", "Quart D'indice", "Les Quartiers À Partir de Maintenant", "Année", "Année ISO", "Année Descendant", "Exercice Fiscal", "Début de L'année", "Fin D'année", "Indice de L'année", "Il Y A Des Années", "Vacances", "Est La Journée de Travail", "Jour de Travail de L'étiquette" }
+        in
+            if language = "en-US" then listColumnsEN
+            else if language = "pt-BR" then listColumnsPT
+            else if language = "es-ES" then listColumnsES
+            else if language = "fr-FR" then listColumnsFR
+            else listColumnsEN,
+    
+    RenamedColumns = Table.RenameColumns ( ReorderedColumns,  List.Zip ( { ColumnNames, NewColumnNames } ) )
+in
+    RenamedColumns
+
+
+    //Constraints e Documentation
+    
+//     ,Documentation = type function(
+//         language as ( type text meta [ 
+//                 Documentation.AllowedValues = {"en-US", "pt-BR", "es-ES", "fr-FR"},
+//                 Documentation.FieldCaption = "Language",
+//                 Documentation.FieldDescription = " Select the language to genereate the data table with column names, month names, names of week day and all the other texts fields. "
+//             ]),
+//         optional columnOfDates as ( type list meta [ 
+//                 //Documentation.AllowedValues = "",
+//                 Documentation.FieldCaption = "Column Reference of Dates",
+//                 Documentation.FieldDescription = " Caution! Large FactTables can cause slowness on load of the data. "
+//             ]),
+//         optional inputStartDate as ( type date meta [ 
+//                 //Documentation.AllowedValues = "",
+//                 Documentation.FieldCaption = "Start Date",
+//                 Documentation.FieldDescription = " Define the start date if you didn't define th read of a column above. "
+//             ]),
+//         optional inputEndDate as ( type date meta [ 
+//                 //Documentation.AllowedValues = "",
+//                 Documentation.FieldCaption = "End Date",
+//                 Documentation.FieldDescription = " Define the start date. "          
+//             ]),
+//         optional monthStartFiscalYear as ( type number meta [ 
+//                 Documentation.AllowedValues = { 1..12 },
+//                 Documentation.FieldCaption = "Month of Start of Fiscal Year",
+//                 Documentation.FieldDescription = "Define the number of month of the start of the fiscal years. "
+//             ]),
+//         optional holidaysTable as ( type table meta [ 
+//                 //Documentation.AllowedValues = "",
+//                 Documentation.FieldCaption = "Holidays Table",
+//                 Documentation.FieldDescription = "A table with just two columns: ""Date"" and ""Holiday"" that it generates the holidays column and impacts the columns of working days. "
+//             ])         
+//     ) as table 
+//     meta [
+//         Documentation.Name = "Power Query function to generate date table by Alison Pezzott - version: 2.0.1",
+//         //Documentation.Description = "", 
+//         Documentation.LongDescription = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetDateTable",
+//         Documentation.Category = "Function", 
+//         Documentation.Version = "2.0.1",
+//         Documentation.Source = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetDateTable", 
+//         Documentation.Author = "Alison Pezzott", 
+//         Documentation.Examples = {[
+//             Description =  "Follow me on my Youtube channel and my social networking!", 
+//             Code = "Caution: Use large fact tables to obtain the date reference may cause slowness during load.#(lf)The table to use in the parameter Holidays Table needs to have just two columns: ""Date"" and ""Holiday"". Where Date is the date of the holiday and Holiday is a string with the name of the holiday.", 
+//             Result = "Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)Instagram: https://www.instagram.com/alisonpezzott#(lf)Github: https://github.com/alisonpezzott#(lf)Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)If you need support, please contact me through these above channels." 
+//         ]}
+//     ]
+// in 
+//     Value.ReplaceType ( GetDateTable,  Documentation )
