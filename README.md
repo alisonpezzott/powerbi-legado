@@ -14,8 +14,7 @@ Please visit and **subscribe** my **YouTube** channel: 👉 [Click here!](https:
 Follow me on my social networks: <br>
 📷 Instagram: https://www.instagram.com/alisonpezzott <br>
 💼 Linkedin: https://www.linkedin.com/in/alisonpezzott <br>
-<br>
-We are just starting. The best is coming!
+
 ---
 ## Main files of this repository
 ### Date Table / Calendário <br>
