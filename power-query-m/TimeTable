@@ -1,8 +1,9 @@
-// let
-//    GetTimeTable = ( language as text ) as table =>
 let
-    // input parameters
-    language = "en-US",
+     Intro = "=======================================================================================#(lf) Tabela Dimensão Horas Power Query (M) por Alison Pezzott - versão: 1.0.0#(lf)#(lf)Instruções:#(lf)1. Defina o idioma (language). Idiomas disponíveis: en-US, pt-BR, es-ES and fr-FR#(lf)#(lf)Me siga no canal no YouTube e em minha redes sociais!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)Se precisar de suporte, por favor me contacte em algum dos canais acima.#(lf)=======================================================================================#(lf)#English#(lf)#(lf)Time Table Power Query (M) by Alison Pezzott - version: 1.0.0#(lf)#(lf)Instructions:#(lf)1. Define the language. Available languages: en-US, pt-BR, es-ES and fr-FR#(lf)#(lf)Follow me on my Youtube channel and my social networking!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)If you need support, please contact me thru above channels.#(lf)=======================================================================================", 
+
+    #"@PARAMETERS" = null,
+    language = "pt-BR",
+    _________ = null,
     
     //types
     _i = Int64.Type,
@@ -96,29 +97,3 @@ let
     RenamedColumns = Table.RenameColumns ( ReorderedColumns,  List.Zip ( { ColumnNames, NewColumnNames } ) )
 in
     RenamedColumns
-
-    //Constraints e Documentation
-    
-//     ,Documentation = type function(
-//         language as ( type text meta [ 
-//                 Documentation.AllowedValues = {"en-US", "pt-BR", "es-ES", "fr-FR"},
-//                 Documentation.FieldCaption = "Language",
-//                 Documentation.FieldDescription = " Select the language to genereate the time table with column names and period names, and other texts fields. "
-//             ])
-//     ) as table 
-//     meta [
-//         Documentation.Name = "Power Query function to get time table by Alison Pezzott - version: 1.0.1",
-//         //Documentation.Description = "", 
-//         Documentation.LongDescription = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetTimeTable",
-//         Documentation.Category = "Function", 
-//         Documentation.Version = "1.0.1",
-//         Documentation.Source = "https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGetTimeTable", 
-//         Documentation.Author = "Alison Pezzott", 
-//         Documentation.Examples = {[
-//             Description =  "Follow me on my Youtube channel and my social networking!", 
-//             Code = "", 
-//             Result = "Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)Instagram: https://www.instagram.com/alisonpezzott#(lf)Github: https://github.com/alisonpezzott#(lf)Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)If you need support, please contact me through these above channels." 
-//         ]}
-//     ]
-// in 
-//     Value.ReplaceType ( GetTimeTable,  Documentation )
