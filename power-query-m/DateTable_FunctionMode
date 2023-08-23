@@ -1,35 +1,32 @@
-// Headers table mode
 /* 
-
+// Headers table mode
 let
-    Headers = "=======================================================================================#(lf) Tabela Calendário Power Query (M) por Alison Pezzott - versão: 2.0.1#(lf)#(lf)Instruções:#(lf)1. Define o idioma (language). Idiomas disponíveis: en-US, pt-BR, es-ES and fr-FR#(lf)2. Defina as datas iniciais e finais (inputStartDate and inputEndDate).#(lf)  Você pode usar List.Min(TabelaFato[Data]) and List.Max(TabelaFato[Data]) respectivamente.#(lf)  Cuidado: Ao usar tabelas fatos com muitas linhas para obter a referência de data pode causar lentidão.#(lf)3. Defina o número do mês em que se inicia um novo ano fiscal. Números entre 1 e 12..#(lf)4. Especifique a tabela de feriados (holidaysTable) para que seja gerado a lista de dias úteis.#(lf)  Esta tabela precisa ter apenas duas colunas: ""Date"" and ""Holiday"".#(lf)  Onde ""Date"" contém a data do feriado e ""Holiday"" o nome do feriado.#(lf)#(lf)Me siga no canal no YouTube e em minha redes sociais!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)Se precisar de suporte, por favor me contacte em algum dos canais acima.#(lf)=======================================================================================#(lf)#English#(lf)#(lf)Date Table Power Query (M) by Alison Pezzott - version: 2.0.1#(lf)#(lf)Instructions:#(lf)1. Define the language. Available languages: en-US, pt-BR, es-ES and fr-FR#(lf)2. Define the start and end dates.#(lf)  You can use List.Min(FactTable[Date]) and List.Max(FactTable([Date]) respectively.#(lf)  Caution: Use large fact tables to obtain the date reference may cause slowness.#(lf)3. Define the number of the month of the start of the fiscal year. Number between 1 and 12.#(lf)4. Specify the holidays table to join to the main and generate list of working days.#(lf)  This table needs to have just two columns: ""Date"" and ""Holiday"". #(lf)#(lf)Follow me on my Youtube channel and my social networking!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)If you need support, please contact me thru above channels.#(lf)=======================================================================================", 
+    Intro = "=======================================================================================#(lf) Tabela Calendário Power Query (M) por Alison Pezzott - versão: 2.0.1#(lf)#(lf)Instruções:#(lf)1. Define o idioma (language). Idiomas disponíveis: en-US, pt-BR, es-ES and fr-FR#(lf)2. Defina as datas iniciais e finais (inputStartDate and inputEndDate).#(lf)  Você também pode usar TabelaFato[Data] no parâmetro ""columnOfDates"" para capturar as datas de iníco e fim da tabela fato.#(lf)  Cuidado: Ao usar tabelas fatos com muitas linhas para obter a referência de data pode causar lentidão.#(lf)3. Defina o número do mês em que se inicia um novo ano fiscal. Números entre 1 e 12..#(lf)4. Especifique a tabela de feriados (holidaysTable) para que seja gerado a lista de dias úteis.#(lf)  Esta tabela precisa ter apenas duas colunas: ""Date"" and ""Holiday"".#(lf)  Onde ""Date"" contém a data do feriado e ""Holiday"" o nome do feriado.#(lf)#(lf)Me siga no canal no YouTube e em minha redes sociais!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)Se precisar de suporte, por favor me contacte em algum dos canais acima.#(lf)=======================================================================================#(lf)#English#(lf)#(lf)Date Table Power Query (M) by Alison Pezzott - version: 2.0.1#(lf)#(lf)Instructions:#(lf)1. Define the language. Available languages: en-US, pt-BR, es-ES and fr-FR#(lf)2. Define the start and end dates.#(lf)  You can use FactTable[Date] in the parameter ""columnOfDates"" to capture the stard and end dates of the fact table.#(lf)  Caution: Use large fact tables to obtain the date reference may cause slowness.#(lf)3. Define the number of the month of the start of the fiscal year. Number between 1 and 12.#(lf)4. Specify the holidays table to join to the main and generate list of working days.#(lf)  This table needs to have just two columns: ""Date"" and ""Holiday"". #(lf)#(lf)Follow me on my Youtube channel and my social networking!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)If you need support, please contact me thru above channels.#(lf)=======================================================================================", 
 
-
-    language = "en-US", 
+    #"@PARAMETERS" = null,
+    language = "pt-BR", 
     inputStartDate = #date ( 2022, 1, 1 ), 
     inputEndDate = #date ( 2024, 12, 31 ), 
+    columnOfDates = null,  
     monthStartFiscalYear = null, 
     holidaysTable = null, 
-    currentDate = Date.From ( DateTime.FixedLocalNow() ), 
-    startDate = Date.StartOfYear ( inputStartDate ), 
-    endDate =  Date.EndOfYear ( inputEndDate ), 
-
+    
 */
 
-// Headers function mode
-///*
-
+///*// Headers function mode
 let
     GetDateTable = (
         language as text, 
-        optional columnOfDates as list,
         optional inputStartDate as date, 
-        optional inputEndDate as date,  
+        optional inputEndDate as date, 
+        optional columnOfDates as list,  
         optional monthStartFiscalYear as number, 
         optional holidaysTable as table 
     ) as table =>
-
 let
+//*/
+
+    ___________ = null,
     currentDate = Date.From ( DateTime.FixedLocalNow() ),    
     startDate =  
         if columnOfDates <> null then Date.StartOfYear ( List.Min ( columnOfDates ) )
@@ -39,8 +36,6 @@ let
          if columnOfDates <> null then Date.EndOfYear ( List.Max ( columnOfDates ) )
         else if inputEndDate <> null then Date.EndOfYear ( inputEndDate )
         else Date.EndOfYear ( currentDate ),
-
-//*/
 
 //  Aux gerenal parameters
     zeroWidthSpace = Character.FromNumber ( 8203 ), 
@@ -215,11 +210,6 @@ in
                 Documentation.FieldCaption = "Language",
                 Documentation.FieldDescription = " Select the language to genereate the data table with column names, month names, names of week day and all the other texts fields. "
             ]),
-        optional columnOfDates as ( type list meta [ 
-                //Documentation.AllowedValues = "",
-                Documentation.FieldCaption = "Column Reference of Dates",
-                Documentation.FieldDescription = " Caution! Large FactTables can cause slowness on load of the data. "
-            ]),
         optional inputStartDate as ( type date meta [ 
                 //Documentation.AllowedValues = "",
                 Documentation.FieldCaption = "Start Date",
@@ -229,6 +219,11 @@ in
                 //Documentation.AllowedValues = "",
                 Documentation.FieldCaption = "End Date",
                 Documentation.FieldDescription = " Define the start date. "          
+            ]),
+        optional columnOfDates as ( type list meta [ 
+                //Documentation.AllowedValues = "",
+                Documentation.FieldCaption = "Column Reference of Dates",
+                Documentation.FieldDescription = " Caution! Large FactTables can cause slowness on load of the data. "
             ]),
         optional monthStartFiscalYear as ( type number meta [ 
                 Documentation.AllowedValues = { 1..12 },
