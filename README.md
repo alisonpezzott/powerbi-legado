@@ -23,7 +23,7 @@ Follow me on my social networks: <br>
 > Credits:
 > - ISO Weeks and ISO YEAR: Calendar based on weeks by Rick de Groot: [Create ISO Week and ISO Year in Power Query M (ISO 8601) (gorilla.bi)](https://gorilla.bi/power-query/create-iso-week-and-iso-year/#final-code-iso-week)
 > - Zero Widht Space Character by Patrick on Channel Hoosier BI: [Date Tables Tips](https://youtu.be/E0oe7k0UXXY)
-### Time Table / Dimensão Horas
+### Time Table / Dimensão Tempo
 👉 [TimeTable](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/TimeTable)
 
 
