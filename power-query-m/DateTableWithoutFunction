@@ -1,10 +1,12 @@
-// let
-//     GetDateTable = ( language as text, optional columnOfDates as list, optional inputStartDate as date, optional inputEndDate as date, optional monthStartFiscalYear as number, optional holidaysTable as table  ) as table =>
 let
-    // input Parameters
-    language = "en-US",
-    inputStartDate = #date(2023, 1, 1), 
-    inputEndDate = #date(2025, 12, 31),
+    Headers = "=======================================================================================#(lf) Tabela Calendário Power Query (M) por Alison Pezzott - versão: 2.0.1#(lf)#(lf)Instruções:#(lf)1. Define o idioma (language). Idiomas disponíveis: en-US, pt-BR, es-ES and fr-FR#(lf)2. Defina as datas iniciais e finais (inputStartDate and inputEndDate).#(lf)  Você pode usar List.Min(TabelaFato[Data]) and List.Max(TabelaFato[Data]) respectivamente.#(lf)  Cuidado: Ao usar tabelas fatos com muitas linhas para obter a referência de data pode causar lentidão.#(lf)3. Defina o número do mês em que se inicia um novo ano fiscal. Números entre 1 e 12..#(lf)4. Especifique a tabela de feriados (holidaysTable) para que seja gerado a lista de dias úteis.#(lf)  Esta tabela precisa ter apenas duas colunas: ""Date"" and ""Holiday"".#(lf)  Onde ""Date"" contém a data do feriado e ""Holiday"" o nome do feriado.#(lf)#(lf)Me siga no canal no YouTube e em minha redes sociais!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)Se precisar de suporte, por favor me contacte em algum dos canais acima.#(lf)=======================================================================================#(lf)#English#(lf)#(lf)Date Table Power Query (M) by Alison Pezzott - version: 2.0.1#(lf)#(lf)Instructions:#(lf)1. Define the language. Available languages: en-US, pt-BR, es-ES and fr-FR#(lf)2. Define the start and end dates.#(lf)  You can use List.Min(FactTable[Date]) and List.Max(FactTable([Date]) respectively.#(lf)  Caution: Use large fact tables to obtain the date reference may cause slowness.#(lf)3. Define the number of the month of the start of the fiscal year. Number between 1 and 12.#(lf)4. Specify the holidays table to join to the main and generate list of working days.#(lf)  This table needs to have just two columns: ""Date"" and ""Holiday"". #(lf)#(lf)Follow me on my Youtube channel and my social networking!#(lf)  Youtube: https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1#(lf)  Instagram: https://www.instagram.com/alisonpezzott#(lf)  Github: https://github.com/alisonpezzott#(lf)  Linkedin: https://www.linkedin.com/in/alisonpezzott#(lf)#(lf)If you need support, please contact me thru above channels.#(lf)=======================================================================================", 
+
+    //input Parameters
+
+    //Define the language. 
+    language = "en-US", 
+    inputStartDate = #date ( 2023, 1, 1 ), 
+    inputEndDate = #date ( 2025, 12, 31 ),
     monthStartFiscalYear = 3,
     holidaysTable = "" // Table.FromRecords ( {[ Date = #date(2023,12 ,25 ), Holiday = "Christmas" ]}, type table [ Date=_d, Holiday=_t ] )
 ,
