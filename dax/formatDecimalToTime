@@ -1,0 +1,12 @@
+VAR _Value = SELECTEDMEASURE()
+VAR _Hour = TRUNC ( _Value  )
+VAR _DecimalMinute = ( _Value - _Hour) * 60
+VAR _Minute = TRUNC ( ( _Value - _Hour) * 60 )
+VAR _Second = TRUNC ( ( _DecimalMinute - _Minute ) * 60 )
+RETURN
+  """" & FORMAT ( _Hour, "0#;0#" ) 
+       & ":" 
+       & FORMAT ( _Minute, "0#;0#" ) 
+       & ":" 
+       & FORMAT ( _Second, "0#;0#" )
+       & """"
