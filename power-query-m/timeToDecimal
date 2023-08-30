@@ -1,0 +1,10 @@
+let 
+    Function =  ( _Time as time ) as number => 
+  let
+      _Hour = Time.Hour( _Time ),
+      _Minutes = Time.Minute ( _Time ) / 60,
+      _Seconds = Time.Second ( _Time ) / 3600
+  in
+      _Hour + _Minutes + _Seconds
+in
+    Function
