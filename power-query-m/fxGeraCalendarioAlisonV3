@@ -90,7 +90,7 @@ let
             End of Year = Date.EndOfYear ( [Date] ),
             Year Index = Date.Year ( [Date] ) - Date.Year ( startDate ) + 1,
             Week = 
-                if inputDayStartWeek = "ISO 8601 - Monday" or inputDayStartWeek = null or inputDayStartWeek = "" then 
+                if inputDayStartWeek = "ISO 8601 - Segunda-feira/Monday" or inputDayStartWeek = null or inputDayStartWeek = "" then 
                     let 
                         thursdayInWeek = Date.AddDays ( [Date], 3 - Date.DayOfWeek ( [Date], Day.Monday ) ), 
                         yearThursdayInWeek = #date ( Date.Year ( thursdayInWeek ), 1, 1 ), 
@@ -151,7 +151,7 @@ let
             Month Name Initial = Text.Repeat ( zeroWidthSpace, 12 - [Month] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 1 ),
             Month Year = Text.Repeat ( zeroWidthSpace, maxMonthIndex - [Month Index] ) & Text.Start ( Text.Proper ( Date.MonthName ( [Date], language ) ), 3 ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
             Week Year = 
-                if inputDayStartWeek = "ISO 8601 - Monday" or inputDayStartWeek = null or inputDayStartWeek = ""
+                if inputDayStartWeek = "ISO 8601 - Segunda-feira/Monday"  or inputDayStartWeek = null or inputDayStartWeek = ""
                 then Text.Repeat ( zeroWidthSpace, maxWeekIndex - [Week Index] ) & weekPrefix & Text.PadStart ( Text.From ( [Week] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year ISO] ), 2 )
                 else Text.Repeat ( zeroWidthSpace, maxWeekIndex - [Week Index] ) & weekPrefix & Text.PadStart ( Text.From ( [Week] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year] ), 2 ),
             Quarter Name = quarterPrefix & Text.From ( [Quarter] ),
@@ -203,7 +203,7 @@ let
                     textOut = 
                         if [Weeks from Now] = 0 then currentWeek else 
                         if [Weeks from Now] = -1 then previousWeek else 
-                        if inputDayStartWeek = "ISO 8601 - Monday" or inputDayStartWeek = null or inputDayStartWeek = ""
+                        if inputDayStartWeek = "ISO 8601 - Segunda-feira/Monday"  or inputDayStartWeek = null or inputDayStartWeek = ""
                             then weekPrefix & Text.PadStart ( Text.From ( [Week] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year ISO] ), 2 )
                             else weekPrefix & Text.PadStart ( Text.From ( [Week] ), 2, "0" ) & delimiter & Text.End ( Text.From ( [Year] ), 2 )
                 in
