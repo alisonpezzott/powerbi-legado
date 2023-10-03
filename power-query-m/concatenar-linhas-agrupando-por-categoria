@@ -1,0 +1,5 @@
+let
+    Fonte = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WclTSUUpJTMlXMFSK1UHiGoG5TqiyTqiyzqiyLji4RqhcY6XYWAA=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [categoria = _t, dados = _t]),
+    LinhasAgrupadas = Table.Group(Fonte, {"categoria"}, {{"dados", each Text.Combine(List.Transform([dados], Text.From), ", "), type text}})
+in
+    LinhasAgrupadas
