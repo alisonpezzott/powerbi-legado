@@ -1,0 +1,7 @@
+Valor Mais Recente = 
+VAR _MaxData = MAX ( fDados[Data] )
+RETURN
+    CALCULATE (
+        SUM ( fDados[Valor] ),
+        dCalendario[Data] = _MaxData
+    )
