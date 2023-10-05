@@ -1,0 +1,10 @@
+Filtro Mais Recente = 
+//Medida para incluir um filtro lateral para trazer os dados na última data
+VAR _MaxData = 
+    CALCULATE ( 
+        MAX ( fDados[Data] ),
+        ALL ( fDados ),
+        dProdutos
+    )
+RETURN
+    IF ( SELECTEDVALUE ( dCalendario[Data] ) = _MaxData, 1 )
