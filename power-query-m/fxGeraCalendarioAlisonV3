@@ -245,8 +245,8 @@ let
                 dayOfWeek = Date.DayOfWeek([Date],Day.Monday)
             in
                 [
-                    Is Working Day = if [Holiday] <> null or List.Contains ( {6..7}, dayOfWeek ) then 0 else 1,
-                    Label Working Day = if [Holiday] <> null or List.Contains ( {6..7}, dayOfWeek ) then nonWorkingDay else workingDay
+                    Is Working Day = if [Holiday] <> null or List.Contains ( {5..6}, dayOfWeek ) then 0 else 1,
+                    Label Working Day = if [Holiday] <> null or List.Contains ( {5..6}, dayOfWeek ) then nonWorkingDay else workingDay
                 ],
         type [ Is Working Day = _i, Label Working Day = _t ]
     ),
