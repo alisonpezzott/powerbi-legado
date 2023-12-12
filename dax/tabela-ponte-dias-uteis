@@ -1,0 +1,38 @@
+Ponte Dias Úteis DAX = 
+VAR __DiasFato = DISTINCT ( Vencimentos[Data Vencimento] )
+VAR __MinData = MINX ( __DiasFato, [Data Vencimento] )
+VAR __MaxData = MAXX ( __DiasFato, [Data Vencimento] ) + 5
+VAR __Datas = 
+    SELECTCOLUMNS ( 
+        CALENDAR ( __MinData, __MaxData ), 
+        "Data Vencimento", 
+        [Date] 
+    )
+VAR __Feriados = DISTINCT ( Feriados[Date] )
+VAR __DiaUtilAdicionado = 
+    ADDCOLUMNS (
+        __Datas,
+        "É Útil?",
+        IF ( 
+            NOT ( [Data Vencimento] ) IN __Feriados
+                && WEEKDAY ( [Data Vencimento], 2 ) < 6,
+            TRUE ( ),
+            FALSE ( )
+        )
+    )
+RETURN
+    ADDCOLUMNS (
+        __DiaUtilAdicionado,
+        "Próximo Dia Útil",
+        VAR 
+            __DataContexto = [Data Vencimento] 
+        RETURN
+        MINX (
+            FILTER ( 
+                __DiaUtilAdicionado, 
+                [É Útil?] 
+                && [Data Vencimento] >= __DataContexto
+            ),
+            [Data Vencimento]
+        )
+    )
