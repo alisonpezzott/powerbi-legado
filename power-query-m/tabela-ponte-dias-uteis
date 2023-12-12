@@ -1,0 +1,35 @@
+let
+    Fonte = List.Buffer(List.Distinct(Vencimentos[Data Vencimento])),
+    DataMin = List.Min(Fonte),
+    DataMax = Date.AddDays(List.Max(Fonte), 5),
+    Duracao = Duration.Days(DataMax-DataMin)+1,
+    Lista = List.Dates(DataMin, Duracao, #duration(1,0,0,0)),
+    Tabela = Table.FromList(Lista, Splitter.SplitByNothing(), type table[Data Vencimento = date] ),
+    DiasUteis = Table.AddColumn(
+        Tabela, 
+        "É Útil?", 
+        each 
+            let 
+                __dataContexto = [Data Vencimento],
+                __notIsFeriado = not(List.Contains(Feriados[Date],__dataContexto)),
+                __isUtilDiaSemana = Date.DayOfWeek(__dataContexto, Day.Monday) < 5,
+                __isUtil = __notIsFeriado and __isUtilDiaSemana
+            in
+                __isUtil, 
+        type logical
+    ),
+    ProximoDiaUtil = Table.AddColumn(
+        DiasUteis, 
+        "Próximo Dia Útil", 
+        let 
+            __diasUteis = List.Buffer(Table.SelectRows(DiasUteis,each [#"É Útil?"])[Data Vencimento]) 
+        in 
+            each 
+                let 
+                    __dataContexto = [Data Vencimento] 
+                in 
+                    List.Select(__diasUteis, each _ >= __dataContexto ){0}, 
+        type date
+    )
+in
+    ProximoDiaUtil
