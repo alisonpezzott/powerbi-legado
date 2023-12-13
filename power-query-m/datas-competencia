@@ -1,0 +1,42 @@
+DatasPorCompetencia = Table.AddColumn ( 
+        TabelaDatas, 
+        "DatasCompetencia", 
+        let
+            DiaInicioMes = 16, 
+            MesInicioAno = 6
+        in
+            each
+           [
+            DataCompetencia = 
+                let
+                    __Dia = Date.Day([Data]),
+                    __Mes = Date.Month([Data]),
+                    __Ano = Date.Year([Data]),
+                    __SaidaMes = 
+                        if __Dia >= DiaInicioMes 
+                        then 
+                        if __Mes = 12 then 1 else __Mes + 1
+                        else __Mes,
+                    __SaidaAno = 
+                        if __Dia >= DiaInicioMes  and __Mes = 12 
+                        then __Ano + 1
+                        else __Ano,
+                    __AnoFiscal = if __SaidaMes >= MesInicioAno then __SaidaAno + 1 else __SaidaAno
+                in 
+                    #date ( __AnoFiscal, __SaidaMes, 1 ),          
+            Competencia = 
+                let 
+                    __Mes = Date.Month(DataCompetencia),
+                    __Prefixo = 
+                        if __Mes >= MesInicioAno
+                        then __Mes - MesInicioAno + 1
+                        else __Mes - MesInicioAno + 1 + 12,
+                    __PrefixoTexto = Number.ToText(__Prefixo),
+                    __MesTexto = Text.Proper(Date.MonthName(DataCompetencia, "pt-BR")),
+                    __AnoTexto = Date.ToText(DataCompetencia,[Format="yy"])
+
+            in
+                __PrefixoTexto & "." & " " & __MesTexto & "/" & __AnoTexto
+        ],
+        type [DataCompetencia = date, Competencia = text ]
+    )
