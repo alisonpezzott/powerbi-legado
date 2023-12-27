@@ -1,6 +1,6 @@
-## How to extract text in parentheses in DAX from any string regardless of its position?
+# How to extract a slice of a string between parentheses regardless of its position with the DAX on Power BI?
 
-### 1. First create a table called **Data** with the following code
+## 1. First create a table called 'DataTable' with the following code
 
 ```dax
 DataTable = 
@@ -24,7 +24,7 @@ Output
 
 <br></br>
 
-### 2. Add a calculated column with the following code:
+## 2. Add a calculated column with the following code:
 
 ```dax
 ExtractedText =
@@ -45,7 +45,7 @@ The new added column just copied the source column, ok.
 
 <br></br>
 
-### 3. Modify the DAX to extract the start position of the desired text.
+## 3. Modify the DAX to extract the start position of the desired text.
 ```dax
 ExtractedText =
 
@@ -66,7 +66,7 @@ The variable __StartPosition finds the oppening parentheses position and plus 1,
 
 <br></br>
 
-### 4. Modify the DAX to extract the end position of the desired text.
+## 4. Modify the DAX to extract the end position of the desired text.
 
 ```dax
 ExtractedText =
@@ -90,7 +90,7 @@ The variable __EndPosition finds the closing patentheses position.
 
 <br></br>
 
-### 5. Modify the DAX to extract the length between start and end positions
+## 5. Modify the DAX to extract the length between start and end positions
 ```dax
 ExtractedText =
 
@@ -115,7 +115,7 @@ The length in this case is the same.
 
 <br></br>
 
-### 6. Finally, modify the DAX to brings the desired extracted text.
+## 6. Finally, modify the DAX to brings the desired extracted text.
 ```dax
 ExtractedText =
 
@@ -143,7 +143,7 @@ The MID function extracts a part of a string specified by a start position and t
 
 <br></br>
 
-### 7. Also its's possible use this syntax on a measure with a small correction, adding a aggregation funcion to the source.
+## 7. Also its's possible use this syntax on a measure with a small correction, adding an aggregation funcion to the source.
 
 ```dax
 Extracted Text =
