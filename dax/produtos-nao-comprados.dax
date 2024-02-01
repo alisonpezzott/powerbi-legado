@@ -1,0 +1,9 @@
+Produtos não comprados = 
+--Esta medida conta os produtos não comprados
+
+CALCULATE ( 
+  DISTINCTCOUNT ( dProdutos[produto_id] ),
+  NOT ( dProdutos[produto_id] ) IN VALUES ( fVendas[produto_id] )  
+)
+
+
