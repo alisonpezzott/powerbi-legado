@@ -1,0 +1,53 @@
+-- Esta função tem por objetivo extrair o texto após os últimos números de uma string
+-- mesmo que os algarismos seja variáveis
+
+
+( coluna ) =>
+
+let
+    
+    paraRecord = Record.ToTable ( coluna ),
+    
+    addLista = Table.AddColumn ( 
+        paraRecord, 
+        "Lista", 
+        each Text.Split ( [Value], " " )
+    ),
+    
+    listaExp = Table.ExpandListColumn (
+        addLista, 
+        "Lista"
+    )[[Lista]],
+    
+    addCheck = Table.AddColumn ( 
+        listaExp, 
+        "Check", 
+        each try Number.From ( [Lista] ) otherwise null
+    ),
+    
+    addIndice = Table.AddIndexColumn ( 
+        addCheck, 
+        "Indice", 
+        0, 
+        1, 
+        Int64.Type 
+    ),
+    
+    addUltimoIndiceNumero = Table.AddColumn(
+        addIndice, 
+        "IndiceUltimoNumero", 
+        each List.Max ( Table.SelectRows ( addIndice, each [Check] <> null )[Indice] )
+    ),
+    
+    palavras = Table.SelectRows ( 
+        addUltimoIndiceNumero, 
+        each [Indice] > [IndiceUltimoNumero] 
+    )[Lista],
+    
+    cidade = Text.Combine ( palavras, " " )
+    
+in
+    
+    cidade
+
+
