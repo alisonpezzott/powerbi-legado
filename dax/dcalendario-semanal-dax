@@ -34,7 +34,7 @@ INDEX (
 		__PeriodoSegundaFeiraDataInicial,
 		WEEKDAY ( [Date], 2 ) = 1
 	),
-	ORDERBY([Date], ASC)
+	ORDERBY ( [Date], ASC )
 )
 
 -- Gera a lista de datas
@@ -108,7 +108,7 @@ ADDCOLUMNS (
     
 )
 
--- Filtra a tabela gerada contendo apenas o período compreendido entre as datas iniciais e finais
+-- Filtra a tabela gerada contendo apenas o período compreendido entre as datas inicial e final
 VAR __filtrada = 
 FILTER (
     __adSemanaMes,
