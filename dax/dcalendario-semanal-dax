@@ -31,7 +31,7 @@ ADDCOLUMNS (
 VAR __adComuns = 
 ADDCOLUMNS (
     __adIniSemana,
-    "FinalSemana", [InicioSemana] + 7,
+    "FinalSemana", [InicioSemana] + 6,
     "DiaSemanaNo", WEEKDAY ( [Data], 2 ),
     "DiaSemana", FORMAT ( [Data], "dddd" ),
     "DiaSemanaAbreviado", FORMAT ( [Data], "ddd" ),
@@ -69,7 +69,7 @@ ADDCOLUMNS (
     "SemanaMes",
     VAR __InicioSemana = [Data] - WEEKDAY ( [Data], 2 ) + 1
     VAR __InicioMes = EOMONTH ( __InicioSemana, -1 ) + 1
-    VAR __primeirosSeteDias = CALENDAR ( __InicioMes, __InicioMes + 7 )
+    VAR __primeirosSeteDias = CALENDAR ( __InicioMes, __InicioMes + 6 )
     VAR __PrimeiraSegundaFeira = INDEX ( 1, FILTER ( __primeirosSeteDias, WEEKDAY ( [Date], 2 ) = 1 ) )
     VAR __SemanaMes = ROUNDUP ( DIVIDE ( [Data] - __PrimeiraSegundaFeira, 7 ) + 0.05, 0 )
     RETURN __SemanaMes
