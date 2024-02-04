@@ -12,35 +12,10 @@ VAR __DataInicial = DATE ( 2022, 1, 1 )
 -- Defina a data final
 VAR __DataFinal = DATE ( 2025, 12, 31 )
 
--- Este próximo trecho encontra a primeira segunda-feira do mês para que compreenda
--- a data inicial definida e traga a semana do mês sem distorções
-
--- Encontra a segunda-feira da data inicial
-VAR __SegundaFeiraDataInicial = __DataInicial - WEEKDAY ( __DataInicial, 2 ) + 1 
-
--- É gerada uma tabela com todas as datas que compoem os inícios das semanas do mês
--- em que a segunda-feira da data inicial está contida
-VAR __PeriodoSegundaFeiraDataInicial = 
-CALENDAR ( 
-	EOMONTH ( __SegundaFeiraDataInicial, -1 ) + 1,
-	EOMONTH ( __SegundaFeiraDataInicial, 0 )
-)
-
--- Encontra a primeira segunda-feira do mês
-VAR __PrimeiraSegundaFeiraPeriodo = 
-INDEX (
-	1,
-	FILTER (
-		__PeriodoSegundaFeiraDataInicial,
-		WEEKDAY ( [Date], 2 ) = 1
-	),
-	ORDERBY ( [Date], ASC )
-)
-
 -- Gera a lista de datas
 VAR __datas = 
 SELECTCOLUMNS (
-    CALENDAR ( __PrimeiraSegundaFeiraPeriodo, __DataFinal ),
+    CALENDAR ( __DataInicial, __DataFinal ),
     "Data", 
     [Date] 
 )
@@ -53,7 +28,7 @@ ADDCOLUMNS (
 )
 
 -- Adiciona as granularidades comuns
-VAR __adMesAno = 
+VAR __adComuns = 
 ADDCOLUMNS (
     __adIniSemana,
     "FinalSemana", [InicioSemana] + 7,
@@ -90,34 +65,18 @@ ADDCOLUMNS (
 -- Adiciona a semana do mês
 VAR __adSemanaMes = 
 ADDCOLUMNS (
-    __adMesAno,
+    __adComuns,
     "SemanaMes",
-    VAR __InicioSemana = [InicioSemana]
-    VAR __MesAno = [MesAnoSemanalNo]
-    VAR __SemanaMes = 
-    COUNTROWS ( 
-        FILTER (
-            __adMesAno,
-            [DiaSemanaNo] = 1
-            && [InicioSemana] <= __InicioSemana
-            && [MesAnoSemanalNo]  = __MesAno
-        )
-    )
-    RETURN
-    "Sem." & FORMAT ( __SemanaMes, "\ 0" )
-    
-)
-
--- Filtra a tabela gerada contendo apenas o período compreendido entre as datas inicial e final
-VAR __filtrada = 
-FILTER (
-    __adSemanaMes,
-    [Data] >= __DataInicial
-        && [Data] <= __DataFinal
+    VAR __InicioSemana = [Data] - WEEKDAY ( [Data], 2 ) + 1
+    VAR __InicioMes = EOMONTH ( __InicioSemana, -1 ) + 1
+    VAR __primeirosSeteDias = CALENDAR ( __InicioMes, __InicioMes + 7 )
+    VAR __PrimeiraSegundaFeira = INDEX ( 1, FILTER ( __primeirosSeteDias, WEEKDAY ( [Date], 2 ) = 1 ) )
+    VAR __SemanaMes = ROUNDUP ( DIVIDE ( [Data] - __PrimeiraSegundaFeira, 7 ) + 0.05, 0 )
+    RETURN __SemanaMes
 )
 
 
-RETURN __filtrada 
+RETURN __adSemanaMes 
 
 
 
