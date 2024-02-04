@@ -1,0 +1,52 @@
+/*
+    Esta função tem por objetivo extrair o número da semana do mês de uma data
+    Cada semana começa na segunda-feira e o mês e o ano da data faz referência ao início de cada semana.
+
+    Por exemplo:    
+    ----------------------------------------------------------------------------------------------
+    |    Data    | Ano  | Mes | InicioSemana | AnoSemanal | MesSemanal | fxSemanaMes(esta função) |
+    |------------|------|-----|--------------|------------|------------|--------------------------|
+    | 02/01/2022 | 2022 |  1  |  27/12/2021  |    2021    |      12    |             4            |
+    | 06/02/2024 | 2024 |  2  |  05/02/2024  |    2024    |      2     |             1            |
+    | 05/01/2025 | 2025 |  1  |  30/12/2024  |    2024    |      12    |             5            |             
+    ----------------------------------------------------------------------------------------------
+
+*/
+
+//========================================Início================================================
+
+// Recebe a data de referência e entrega o número da semana do mês
+( data as date ) as number =>
+
+let
+
+// Extrai o início da semana da data definida (segunda-feira)
+    inicioSemana = Date.StartOfWeek ( data, Day.Monday ),
+
+// Início do mês do início da semana extraído no passo anterior
+    inicioMes = Date.StartOfMonth ( inicioSemana ),
+
+// Gera uma lista com apenas os primeiros sete dias do mês
+    primeirosSeteDias = List.Dates ( inicioMes, 7, #duration ( 1, 0, 0, 0 ) ),
+
+// Encontra a primeria segunda-feira do mês
+    primeiraSegundaFeira = List.Select ( 
+        primeirosSeteDias, 
+        each Date.DayOfWeek ( _, Day.Monday ) = 0 
+    ){0},
+
+/* 
+    Calcula a diferença em dias da data de referência pela primeira segunda-feira do mês, 
+   Na sequência divide por 7 e soma com um coeficiente de 0.05 para tratar quando o resultado for zero.
+   Por fim, arrendonda o número para cima, finalizando assim o cálculo da semana do mês. 
+*/
+    semanaMes = Number.RoundUp ( 
+        Duration.Days ( data - primeiraSegundaFeira ) 
+        / 7 
+        + 0.05 
+    )
+
+in
+    semanaMes
+
+//===============================================Fim======================================================
