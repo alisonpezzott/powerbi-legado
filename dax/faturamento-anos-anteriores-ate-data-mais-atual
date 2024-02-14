@@ -1,0 +1,32 @@
+Faturamento anos anteriores até a data mais atual = 
+
+//Captura a data de hoje
+VAR _Hoje = TODAY()
+
+//Captura a última data da fato
+VAR _UltDataFato = CALCULATE(MAX(fVendas[Data]), REMOVEFILTERS())
+
+// Faz o check quem é o menor hoje ou a última data fato, 
+// Isto é apenas uma garantia quando não tem dados até a data de hoje
+VAR _DataCorte = MIN(_Hoje, _UltDataFato)
+
+// Extrai o número do mês da data do corte
+VAR _MesDataCorte = MONTH(_DataCorte)
+
+// Extrai o número do dia da data de corte
+VAR _DiaDataCorte = DAY(_DataCorte)
+
+// Captura o ano do contexto de filtro
+VAR _AnoContexto = MAX(dCalendario[Ano])
+
+// Gera a data de corte para cada ano do contexto
+VAR _DataCorteContexto = DATE(_AnoContexto, _MesDataCorte, _DiaDataCorte)
+
+RETURN 
+
+// Calcula o faturamento apenas das datas que são menores ou iguais a
+// data de corte daquele ano
+CALCULATE(
+    [Faturamento],
+    KEEPFILTERS(dCalendario[Data] <= _DataCorteContexto)
+)
