@@ -7,7 +7,6 @@ Siga-me: <br>
 [<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/62074180-060f-449c-afdc-7c994145acf7 width="48"/>](https://www.instagram.com/alisonpezzott)
 [<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/96d0c7a2-4c00-44d3-bc0c-85733d6c7767 width="48"/>](https://www.linkedin.com/in/alisonpezzott) <br>
 
----
 ## Principais links neste repositório
 ### dCalendario <br>
 [Versão 4.0.1 - Última](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dCalendario_v4.0.1)<br>
