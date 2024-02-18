@@ -1,19 +1,11 @@
-# 👋 Bem-vindo ao meu repositório de Power BI
+#  Repoositório do Alison Pezzott no GitrHub
 
-## Introdução
+Inscreva-se: <br> 
+[<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/60051623-edf6-4b60-b622-f50c3541f8f8 width="48"/>](https://www.youtube.com/c/alisonpezzott) <br>
 
-Esse repositório foi criado para compartilhar meus projetos de Pwoer BI, incluindo:
-- Trechos de código M e DAX
-- Hacks de visualização
-- Temas JSON
-- Arquivos PBIX
-- e muito mais...
-
-Visite e **inscreva-se** em meu canal no **YouTube**: 👉 [Clique aqui!](https://www.youtube.com/c/alisonpezzott) <br>
-
-Me siga nas minhas redes sociais: <br>
-📷 Instagram: https://www.instagram.com/alisonpezzott <br>
-💼 Linkedin: https://www.linkedin.com/in/alisonpezzott <br>
+Siga-me: <br>
+[<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/62074180-060f-449c-afdc-7c994145acf7 width="48"/>](https://www.instagram.com/alisonpezzott)
+[<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/96d0c7a2-4c00-44d3-bc0c-85733d6c7767 width="48"/>](https://www.linkedin.com/in/alisonpezzott) <br>
 
 ---
 ## Principais links neste repositório
