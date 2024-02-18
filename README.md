@@ -1,4 +1,4 @@
-#  Repoositório do Alison Pezzott no GitrHub
+#  Repositório do Alison Pezzott no GitHub
 
 Inscreva-se: <br> 
 [<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/60051623-edf6-4b60-b622-f50c3541f8f8 width="48"/>](https://www.youtube.com/c/alisonpezzott) <br>
