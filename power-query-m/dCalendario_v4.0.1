@@ -428,9 +428,9 @@ let
                         let 
                             inicioMes = Date.StartOfMonth(Date.StartOfWeek(_, inicioSemana)),
                             primeirosSeteDias = List.Dates(inicioMes, 7, #duration(1, 0, 0, 0 )),
-                            primeiraSegundaFeira = List.Select ( 
+                            primeiraSegundaFeira = List.Select( 
                                 primeirosSeteDias, 
-                                each Date.DayOfWeek(_, Day.Monday ) = 0 
+                                each Date.DayOfWeek(_, inicioSemana) = 0 
                             ){0}
                         in
                             Number.RoundUp(Duration.Days(_ - primeiraSegundaFeira) / 7 + 0.05),
