@@ -1,28 +1,23 @@
-# 👋 Welcome to my Power BI repository on GitHub
+# 👋 Bem-vindo ao meu repositório de Power BI
 
-## Intro
+## Introdução
 
-This repository was created to share my projects of Power BI. Including:
-- Snippets of code M and DAX
-- Tricks of visualization
-- JSON themes
-- PBIX files
-- and more...
+Esse repositório foi criado para compartilhar meus projetos de Pwoer BI, incluindo:
+- Trechos de código M e DAX
+- Hacks de visualização
+- Temas JSON
+- Arquivos PBIX
+- e muito mais...
 
-Please visit and **subscribe** my **YouTube** channel: 👉 [Click here!](https://www.youtube.com/c/alisonpezzott/?sub_confirmation=1) <br>
+Visite e **inscreva-se** em meu canal no **YouTube**: 👉 [Clique aqui!](https://www.youtube.com/c/alisonpezzott) <br>
 
-Follow me on my social networks: <br>
+Me siga nas minhas redes sociais: <br>
 📷 Instagram: https://www.instagram.com/alisonpezzott <br>
 💼 Linkedin: https://www.linkedin.com/in/alisonpezzott <br>
 
 ---
-## Main files of this repository
-### Date Table / Calendário <br>
-👉 [V3](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGeraCalendarioAlisonV3)<br>
-> Credits:
-> - ISO Weeks and ISO YEAR: Calendar based on weeks by Rick de Groot: [Create ISO Week and ISO Year in Power Query M (ISO 8601) (gorilla.bi)](https://gorilla.bi/power-query/create-iso-week-and-iso-year/#final-code-iso-week)
-> - Zero Widht Space Character by Patrick on Channel Hoosier BI: [Date Tables Tips](https://youtu.be/E0oe7k0UXXY)
-### Time Table / Dimensão Tempo
-👉 [TimeTable](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/TimeTable)
-
+## Principais links neste repositório
+### dCalendario <br>
+[Versão 4.0.1 - Última](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dCalendario_v4.0.1)<br>
+[Versão 3 - Função](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/fxGeraCalendarioAlisonV3)<br>
 
