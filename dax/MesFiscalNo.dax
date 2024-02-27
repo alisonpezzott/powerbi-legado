@@ -1,0 +1,18 @@
+MesFiscalNoDax = 
+// Script para adicionar uma coluna calculada DAX na dCalendario
+// com o número do mês do ano fiscal.
+// Neste exemplo, o ano fiscal começa em agosto, portanto agosto é 
+// o mês 1, setembro, o mês 2 e julho o mês 12.
+
+VAR _MesInicioAnoFiscal = 8                   //Define o mes de início do ano fiscal
+VAR _Data = 'dCalendario'[Data]               //Data de referência do contexto de linha
+VAR _Mes = MONTH ( _Data )                    //Número do mês da data 
+
+RETURN
+
+    MOD (                                     //Resto da divisão 
+        _Mes - _MesInicioAnoFiscal + 12,      
+        12
+    )
+    + 1
+
