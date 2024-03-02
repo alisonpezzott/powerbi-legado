@@ -1,10 +1,14 @@
-# Tratamento de base com M avançado - Equipamentos de ar condicionado - 2024-03-02
+# Tratamento de base com M avançado
+> Exemplo: Equipamentos de ar condicionado <br>
+> Atualizado em 2024-03-02
 
+## Descrição
 O código abaixo trata uma base extremamente bagunçada e que cresce para a direita, porém apresenta a carcaterística de possuir chave valor.
-Neste código, foi empregado o código sem hard code ou seja sem referência de colunas da base. Além disso este códgo tem a capacidade de aceitar novas colunas (equipamentos) sem a necessidade de manutenção.
-<br>Baixe aqui o arquivo base para o tratamento: [Link](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/exTratEquipoAc/BaseDados.xlsx)
-<br>Acesse aqui o vídeo sobre este case: 
+Neste código, foi empregado o código sem hard code ou seja sem referência de colunas da base. Além disso este códgo tem a capacidade de aceitar novas colunas (equipamentos) sem a necessidade de manutenção.<br>
+> Baixe aqui o arquivo base para o tratamento: [Link](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/exTratEquipoAc/BaseDados.xlsx) <br>
+> Acesse aqui o vídeo sobre este case: 
 
+## Código M
 ```power-query-m
 let
     //Obtem planilha do excel cujo caminho completo está no parâmetro "PastaTrabalho"
