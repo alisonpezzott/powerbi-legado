@@ -2,7 +2,7 @@
 
 O código abaixo trata uma base extremamente bagunçada e que cresce para a direita, porém apresenta a carcaterística de possuir chave valor.
 Neste código, foi empregado o código sem hard code ou seja sem referência de colunas da base. Além disso este códgo tem a capacidade de aceitar novas colunas (equipamentos) sem a necessidade de manutenção.
-<br>Baixe aqui o arquivo base para o tratamento: 
+<br>Baixe aqui o arquivo base para o tratamento: [Link](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/exTratEquipoAc/BaseDados.xlsx)
 <br>Acesse aqui o vídeo sobre este case: 
 
 ```power-query-m
