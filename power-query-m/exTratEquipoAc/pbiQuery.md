@@ -48,8 +48,16 @@ let
                 getPosicoesDistintas = (lista as list) as list =>
                 let
                     posicoes = List.Positions(lista),
-                    tabela = Table.FromColumns({lista, posicoes}, {"Valor", "Posicao"}),
-                    posicoesDistintas = Table.Group(tabela, {"Valor"}, {{"Posicao", each List.Min([Posicao]), type number}})[Posicao]
+                    tabela = Table.FromColumns(
+                        {lista, posicoes}, 
+                        {"Valor", "Posicao"}
+                    ),
+                    posicoesDistintas = Table.Group(
+                        tabela, 
+                        {"Valor"}, 
+                        {{"Posicao", each List.Min([Posicao]), type number}}
+                    )
+                    [Posicao]
                 in
                     posicoesDistintas
             in
