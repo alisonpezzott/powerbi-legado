@@ -20,20 +20,11 @@ let
     //Quebra a planilha, transformando as colunas em listas
     listas = Table.ToColumns(planilha), 
     
-    //Extrai a posição da lista
-    posicoes = List.Positions(listas), 
+    //Seleciona os itens da lista que são as chaves
+    chaves = List.Alternate(listas, 1, 1, 1), 
     
-    //Seleciona as posicoes dos itens da lista que são as chaves
-    indicesChaves = List.Select(posicoes, each Number.Mod(_, 2)=0), 
-    
-    //Transforma as posicoes nas chaves correspondentes das listas
-    chaves = List.Transform(indicesChaves, each listas{_}), 
-    
-    //Seleciona as posicoes dos itens da lista que são os valores
-    indicesValores = List.Select(posicoes, each Number.Mod(_, 2)=1), 
-    
-    //Transforma as posicoes nos valores correspondentes das listas
-    valores = List.Transform(indicesValores, each listas{_}), 
+    //Seleciona os itens da lista que são os valores
+    valores = List.Alternate(listas, 1, 1, 0), 
     
     //Gera uma tabela a partir das listas das tags, chaves e valores
     paraTabela = Table.FromColumns({tags, chaves, valores}, {"Tag", "Chave", "Valor"}), 
