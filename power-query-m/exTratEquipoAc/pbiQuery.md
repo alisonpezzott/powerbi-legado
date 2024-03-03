@@ -21,87 +21,86 @@ let
     listas = Table.ToColumns(planilha), 
     
     //Seleciona os itens da lista que são as chaves
-    chaves = List.Alternate(listas, 1, 1, 1), 
+    campos = List.Alternate(listas, 1, 1, 1), 
     
     //Seleciona os itens da lista que são os valores
-    valores = List.Alternate(listas, 1, 1, 0), 
+    valores = List.Alternate(listas, 1, 1, 0),
+
+    //Une as listas das tags, campos e valores em uma unica tabela
+    zip = Table.FromRows(List.Zip({tags, campos, valores}), {"Tag", "Campos", "Valores"}),
+
+    //Adiciona coluna [PosicoesNulas] com as posicoes vazias da coluna [Campos]
+    posicoesNulas = Table.AddColumn(zip, "PosicoesNulas", each List.PositionOf([Campos], null, List.Count([Campos]))),
     
-    //Gera uma tabela a partir das listas das tags, chaves e valores
-    paraTabela = Table.FromColumns({tags, chaves, valores}, {"Tag", "Chave", "Valor"}), 
-    
-    //Adicioona uma coluna contendo as posicoes válidas quando as chaves não estão vazias
-    indicesValidos = Table.AddColumn( 
-        paraTabela, 
-        "indicesValidos", 
-        each let 
-            vazias = List.PositionOf([Chave], null, List.Count([Chave])),     //Posicoes das chaves vazias
-            todas = List.Positions([Chave])                                   //Todas as posições
-        in 
-            List.RemoveMatchingItems(todas, vazias),                         //Remove as vazias entre todas
-        type list 
-    ), 
-    
-    //Gera um lista de tabelas para cada equipamento pois alguns não possuem todas as mesmas colunas
-    listaTabelas = Table.AddColumn(
-        indicesValidos, 
+    //Adiciona coluna [PosicoesDistintas] para eliminar campos duplicados
+    posicoesDistintas = Table.AddColumn(
+        posicoesNulas, 
+        "PosicoesDistintas", 
+            each  
+                let
+                    getPosicoesDistintas = (lista as list) as list =>
+                        let
+                            posicoes = List.Positions(lista),
+                            tabela = Table.FromColumns({lista, posicoes}, {"Valor", "Posicoes"}),
+                            minPosicao = Table.Group(tabela, {"Valor"}, {{"Posicao", each List.Min([Posicoes])}}),
+                            posicoesDistintas = minPosicao[Posicao]
+                        in
+                            posicoesDistintas
+                in
+                    getPosicoesDistintas([Campos])
+
+    ),
+
+    //Adiciona coluna [PosicoesValidas] que é resultado da exclusão dos itens de [PosicoesNulas] em [PosicoesDistintas]
+    posicoesValidas = Table.AddColumn(posicoesDistintas, "PosicoesValidas", each List.RemoveMatchingItems([PosicoesDistintas], [PosicoesNulas])),
+
+    //Filtra as colunas [Campo] e [Valores] pelas [PosicoesValidas] e transforma cada item uma tabela
+    tabelasExtraidas = Table.AddColumn(
+        posicoesValidas, 
         "Tabelas", 
-        each let 
-            tag = [Tag],                                                     //Tag do equipamento
-            chave = [Chave],                                                 //Lista de todas as chaves
-            chaveOk = List.Transform([indicesValidos], each chave{_}),       //Chaves válidas apenas
-            valor = [Valor],                                                 //Lista de todos os valores
-            valorOk = List.Transform([indicesValidos], each valor{_}),       //Valores válidos apenas
-            tabela = #table(chaveOk, {valorOk})                              //Tabela a partir das chaves e valores válidos
-        in 
-            Table.AddColumn(tabela, "Tag", each tag)                         //Adiciona a coluna Tag
-    )
-    [Tabelas],                                                               //Transforma a tabela em uma lista de tabelas
+        each 
+            let 
+                campos = 
+                    let 
+                        campos = [Campos] 
+                    in 
+                        {"Tag"} & List.Transform([PosicoesValidas], each campos{_}),
+                valores = 
+                    let 
+                        valores = [Valores]
+                    in
+                        {[Tag]} & List.Transform([PosicoesValidas], each valores{_})
+            in  
+                #table(campos, {valores}) 
+    ),
+
+    //Lista as tabelas
+    listaTabelas = tabelasExtraidas[Tabelas],
     
-    //Faz a união de todas as tabelas
-    unionTabelas = Table.Combine(listaTabelas),                              
+    //Consolida as tabelas
+    consolidaTabelas = Table.Combine(listaTabelas),
     
-    //Reordena as colunas
-    reordena = Table.ReorderColumns( 
-        unionTabelas, 
-        { 
-            "Tag", 
-            "Local", 
-            "Em operação", 
-            "Capacidade(BTU/h)", 
-            "Fabricante", 
-            "Ano Fabricação", 
-            "Tipo", 
-            "Tensão (V)", 
-            "Corrente R (A)", 
-            "Corrente S (A)", 
-            "Corrente T (A)", 
-            "Observações", 
-            "Setpoint (°C)", 
-            "Inspecionado em", 
-            "Próxima inspeção"
-        } 
-    ), 
-    
-    //Tipifica as colunas
+    //Configura os tipos de dados das colunas
     tipo = Table.TransformColumnTypes(
-        reordena,{
+        consolidaTabelas,{
             {"Tag", type text}, 
             {"Local", type text}, 
             {"Em operação", type text}, 
             {"Fabricante", type text}, 
             {"Tipo", type text}, 
             {"Observações", type text}, 
-            {"Próxima inspeção", type date}, 
-            {"Inspecionado em", type date}, 
-            {"Setpoint (°C)", type number}, 
-            {"Corrente T (A)", type number}, 
-            {"Corrente S (A)", type number}, 
-            {"Corrente R (A)", type number}, 
+            {"Cor", type text}, 
+            {"Capacidade(BTU/h)", Int64.Type}, 
+            {"Ano Fabricação", Int64.Type}, 
             {"Tensão (V)", type number}, 
-            {"Ano Fabricação", type number}, 
-            {"Capacidade(BTU/h)", type number}
-        } 
-    ) 
+            {"Corrente R (A)", type number}, 
+            {"Corrente S (A)", type number}, 
+            {"Corrente T (A)", type number}, 
+            {"Inspecionado em", type date}, 
+            {"Próxima inspeção", type date}, 
+            {"Setpoint (°C)", Int64.Type}
+        }
+    )
 
 in
     tipo
