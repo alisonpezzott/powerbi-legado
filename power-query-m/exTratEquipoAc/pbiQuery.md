@@ -11,122 +11,124 @@ Neste código, foi empregado o código sem hard code ou seja sem referência de 
 ## Código M
 ```power-query-m
 let
-    //Extrai os dados do excel cujo endereços está definido no parâmetro Arquivo
-    planilha = Excel.Workbook(File.Contents(Arquivo), true, true){[Item="Planilha1", Kind="Sheet"]}[Data],
-
-    //Obtém as tags a partir da lista dos nomes das colunas da planilha
-    tags = List.Select(Table.ColumnNames(planilha), each not Text.StartsWith(_,"Col")),
-
-    //Transforma cada coluna da planilha em uma lista
-    colunasEmListas = Table.ToColumns(planilha),
-
-    //Seleciona a partir das colunasEmListas aquelas que são os campos
-    campos = List.Alternate(colunasEmListas, 1, 1, 1),
-
-    //Seleciona a partir das colunasEmListas aquelas que são os valores
-    valores = List.Alternate(colunasEmListas, 1, 1, 0),
-
-    //Gera uma tabela a partir das listas das tags, campos e valores
-    tabelaDasListas = Table.FromColumns(
-        {tags, campos, valores}, 
-        {"Tag", "Campos", "Valores"}
-    ),
-
-    //Adiciona uma coluna contendo as PosicoesNulas dos campos
-    posicoesNulas = Table.AddColumn(
-        tabelaDasListas, 
-        "PosicoesNulas", 
-        each List.PositionOf([Campos], null, List.Count([Campos]))
-    ),
-
-    //Adiciona uma coluna contendo as PosicoesDistintas dos campos
-    posicoesDistintas = Table.AddColumn(
-        posicoesNulas, 
-        "PosicoesDistintas", 
-        each 
-            let
-                getPosicoesDistintas = (lista as list) as list =>
-                let
-                    posicoes = List.Positions(lista),
-                    tabela = Table.FromColumns(
-                        {lista, posicoes}, 
-                        {"Valor", "Posicao"}
-                    ),
-                    posicoesDistintas = Table.Group(
-                        tabela, 
-                        {"Valor"}, 
-                        {{"Posicao", each List.Min([Posicao]), type number}}
-                    )
-                    [Posicao]
-                in
-                    posicoesDistintas
-            in
-                getPosicoesDistintas([Campos])
-    ),
-
-    //Adiciona uma coluna removendo das PosicoesDistintas as PosicoesNulas
-    posicoesValidas = Table.AddColumn(
-        posicoesDistintas, 
-        "PosicoesValidas", 
-        each List.RemoveMatchingItems([PosicoesDistintas], [PosicoesNulas])
-    ),
-
-    //Adiciona uma coluna contendo apenas os campos válidos
-    camposOk = Table.AddColumn(
-        posicoesValidas, 
-        "CamposOk", 
-        each 
-            let 
-                campos = [Campos] 
-            in
-                {"Tag"}  
-                    & List.Transform([PosicoesValidas], each campos{_})
-    ),
-
-    //Adiciona uma coluna contendo apenas os valores válidos
-    valoresOk = Table.AddColumn(
-        camposOk, 
-        "ValoresOk", 
-        each 
-            let 
-                valores = [Valores]
-            in
-                {[Tag]} & List.Transform([PosicoesValidas], each valores{_})
+    //Extrai os dados da planilha cujo endereço está no parâmetro arquivo
+    sheet = Excel.Workbook(File.Contents(Arquivo), true, true)
+        {[Item = "Planilha1", Kind = "Sheet"]}
+        [Data], 
+    
+    //Extrai a lista com as tags a partir dos nomes das colunas 
+    tags = List.Select(Table.ColumnNames(sheet), each not Text.StartsWith(_, "Col")),
+    
+    //Extrai lista a partir das colunas
+    lists = Table.ToColumns(sheet),
+    
+    //Seleciona os itens que correpondem aos campos
+    fields = List.Alternate(lists, 1, 1, 1),
+    
+    //Seleciona os itens que correspondem aos valores
+    values = List.Alternate(lists, 1, 1),
+    
+    //Gera uma tabela a partir das listas tags, fields e values
+    tbFromColumns = Table.FromColumns(
+        {tags, fields, values},
+        {"Tag", "Field", "Value"}
     ),
     
-    //Adiciona uma coluna, extraindo uma tabela de cada linha
-    tabelasExtraidas = Table.AddColumn(
-        valoresOk, 
-        "Tabelas", 
-        each #table([CamposOk], {[ValoresOk]})
+    //Adiciona uma coluna com as posições nulas dos campos
+    addNullPositions = Table.AddColumn(
+        tbFromColumns,
+        "NullPositions",
+        each List.PositionOf([Field], null, List.Count([Field]))
     ),
-
-    //Gera uam lista de tabelas
-    listaTabelas = tabelasExtraidas[Tabelas],
-
-    //Combina a lista de tabelas
-    consolidado = Table.Combine(listaTabelas),
-
-    //Faz a tipagem das colunas
-    tipoAlterado = Table.TransformColumnTypes(
-        consolidado,{
-            {"Tag", type text}, 
-            {"Local", type text}, 
-            {"Em operação", type text}, 
-            {"Fabricante", type text}, 
-            {"Tipo", type text}, 
-            {"Observações", type text}, 
-            {"Próxima inspeção", type date}, 
-            {"Inspecionado em", type date}, 
-            {"Setpoint (°C)", type number}, 
-            {"Corrente T (A)", type number}, 
-            {"Corrente S (A)", type number}, 
-            {"Corrente R (A)", type number}, 
-            {"Tensão (V)", type number}, 
+    
+    //Adiciona uma coluna com as posições distintas
+    addDistinctPositions = Table.AddColumn(
+        addNullPositions,
+        "DistinctPositions",
+        each
+            let
+                getDistinctPositions = (list as list) as list =>
+                    let
+                        positions = List.Positions(list),
+                        table = Table.FromColumns(
+                            {list, positions},
+                            {"Value", "Position"}
+                        ),
+                        output = Table.Group(
+                            table,
+                            {"Value"},
+                            {{"Position", each List.Min([Position]), type number}}
+                        )[Position]
+                    in
+                        output
+            in
+                getDistinctPositions([Field])
+    ),
+    
+    //Adiciona uma coluna contendo apenas as posições válidas que foi gerada
+    //excluindo da lista das posições distintas, a lista das posições nulas.
+    addPositions = Table.AddColumn(
+        addDistinctPositions,
+        "Positions",
+        each List.RemoveMatchingItems([DistinctPositions], [NullPositions])
+    ),
+    
+    //Adiciona uma coluna com os campos distintos e não nulos
+    addFieldsOk = Table.AddColumn(
+        addPositions,
+        "FieldsOk",
+        each
+            let
+                field = [Field]
+            in
+                {"Tag"} & List.Transform([Positions], each field{_})
+    ),
+    
+    //Adiciona uma coluna com os valores distintos e não nulos
+    addValuesOk = Table.AddColumn(
+        addFieldsOk,
+        "ValueOk",
+        each
+            let
+                value = [Value]
+            in
+                {[Tag]} & List.Transform([Positions], each value{_})
+    ),
+    
+    //Adiciona uma coluna contendo as tabelas geradas a partir dos campos e valores
+    addExtractTables = Table.AddColumn(
+        addValuesOk,
+        "Tables",
+        each #table([FieldsOk], {[ValueOk]})
+    ),
+    
+    //Transforma a coluna Tables em uma lista de tabelas
+    listOfTables = addExtractTables[Tables],
+    
+    //Consolida a lista de tabelas em uma única tabela
+    consolidatedTables = Table.Combine(listOfTables),
+    
+    //Altera os tipos das colunas da tabela
+    chagedType = Table.TransformColumnTypes(
+        consolidatedTables,
+        {
+            {"Tag", type text},
+            {"Local", type text},
+            {"Em operação", type text},
+            {"Tipo", type text},
+            {"Fabricante", type text},
+            {"Observações", type text},
+            {"Inspecionado em", type date},
+            {"Próxima inspeção", type date},
+            {"Setpoint (°C)", type number},
+            {"Corrente T (A)", type number},
+            {"Corrente S (A)", type number},
+            {"Corrente R (A)", type number},
+            {"Tensão (V)", type number},
             {"Capacidade(BTU/h)", type number}
         }
     )
 
 in
-    tipoAlterado
+    chagedType
 ```
