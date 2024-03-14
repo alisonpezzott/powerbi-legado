@@ -6,7 +6,7 @@ lookupvalue = Table.AddColumn(
   in
     each 
       let 
-        __colunaReferencia =  [NomeColunaProcurada]
+        __colunaReferencia =  [NomeColunaReferencia]
       in
         Table.SelectRows(
           __outraTabela,
