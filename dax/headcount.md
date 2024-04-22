@@ -1,5 +1,5 @@
 Os cálculos abaixo são os cálculos mais comuns utilizados para indicadores de Headcount.  
-Para que as medidas abaixo funcionem exatamente iguais, o modelo deve possuir uma ao menos uma tabela  
+Para que as medidas abaixo funcionem exatamente iguais, o modelo deve possuir ao menos uma tabela  
 dFuncionarios contendo colunas de DataAdmissao, DataDesligamento e uma tabela dCalendario com  
 relacionamento inativo com estas duas colunas.  
 
