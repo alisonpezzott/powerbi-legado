@@ -1,0 +1,34 @@
+Vendas ano anterior se atual = 
+/* 
+  Esta medida tem por objetivo retornar o valor de vendas
+  do ano anterior se teve no atual, independente se está 
+  na ponta ou não do calendário
+*/
+
+
+VAR __tabelaTemporaria = 
+    FILTER (
+        ADDCOLUMNS (
+            SUMMARIZE (
+                dCalendario
+                , dCalendario[Ano]
+                , dCalendario[Mes]
+                , dCalendario[MesNo]
+            )
+            , "@Atual"
+            , [Vendas]
+            , "@Anterior"
+            , CALCULATE(
+                [Vendas]
+                , SAMEPERIODLASTYEAR ( dCalendario[Data] )
+            )
+        )
+        , NOT ISBLANK ( [@Atual] )
+    )
+
+RETURN 
+    SUMX (
+        __tabelaTemporaria
+        , [@Anterior]
+    ) 
+
