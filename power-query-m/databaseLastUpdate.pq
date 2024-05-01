@@ -1,4 +1,4 @@
 let
-    datatime = DateTime.SwitchZone(DateTime.LocalNow(), -3)
+    datatime = DateTime.SwitchZone(DateTime.LocalNow(), -3) //Sao Paulo - BR
 in
     datetime 
