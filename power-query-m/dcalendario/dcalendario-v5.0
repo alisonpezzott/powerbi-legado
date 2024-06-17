@@ -2,6 +2,20 @@
 //Elaborado por Alison Pezzott em 6 de junho de 2024
 //Disponível em: https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario-v5 
 
+/*
+    Script:         dCalendario Versão 5.0
+    Elaborado por:  Alison Pezzott
+    Atualizado em:  segunda-feira, 17 de junho de 2024 às 05:20 
+    YouTube:        https://youtube.com/@fluentebi
+    Telegram:       https://t.me/fluentebi
+    Linkedin:       https://linkedin.com/in/alisonpezzott
+    Instagram:      https://instagram.com/alisonpezzott
+    Github:         https://github.com/alisonpezzott
+    Link:           https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/dcalendario-v5.0 
+
+*/
+
+
 //********Configurações********
 let 
     //Especifique a data inicial 
