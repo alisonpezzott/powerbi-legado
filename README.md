@@ -1,11 +1,10 @@
-#  Repositório do Alison Pezzott no GitHub
-
-## Principais links neste repositório
 ### dCalendario <br>
 
 | Versão | Data | Acesso | 
-| - | - | - |
-| Versão 5 | 2024-06-16 |[dcalendario-v5](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario-v5)|
+| :- | - | :- |
+| 5.0 (Atual) | 2024-06-16 |[dcalendario-v5.0](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/dcalendario-v5.0)|
+| 4.2 | 2024-02-28 | [dcalendario-v4.2](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/dcalendario-v4.2)|
+| Outras |  | [Arquivo](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/arquivo)|
 
 Inscreva-se: <br> 
 [<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/60051623-edf6-4b60-b622-f50c3541f8f8 width="48"/>](https://www.youtube.com/@fluentebi) <br>
