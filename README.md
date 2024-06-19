@@ -1,6 +1,13 @@
 <a href="https://www.youtube.com/@fluentebi" target="_blank">
-  <img src="https://github.com/alisonpezzott/powerbi/blob/9f06bb851af832dedad9fa34cad406e956594cb3/assets/branding/header-git.png" alt="fluentebi no YouTube" style="width:800px;"/>
+  <img src="https://github.com/alisonpezzott/powerbi/blob/9f06bb851af832dedad9fa34cad406e956594cb3/assets/branding/header-git.png" alt="fluentebi no YouTube"/>
 </a>
+<br>
+Repositório mantido por Alison Pezzott do canal fluentebi focado em Business Intelligence utilizando o Microsoft Power BI.
+Aqui você irá encontrar vários snippets para implementar no dia-a-dia.
+Siga nossos canais e entre para a comunidade clicando <a href="https://t.me/fluentebi" > aqui </a>.
+<br>
+
+## Mais Procurado
 
 ### dCalendario <br>
 
@@ -13,7 +20,34 @@
 
 
 
-Siga-me: <br>
-[<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/62074180-060f-449c-afdc-7c994145acf7 width="48"/>](https://www.instagram.com/alisonpezzott)
-[<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/96d0c7a2-4c00-44d3-bc0c-85733d6c7767 width="48"/>](https://www.linkedin.com/in/alisonpezzott) <br>
+<table style="border-collapse: collapse; border: none;">
+  <tr>
+    <td style="border: none;">
+      <a href="https://www.youtube.com/@fluentebi" target="_blank">
+        <img src="https://github.com/alisonpezzott/powerbi/blob/main/assets/icons/youtube.png" alt="fluentebi no YouTube" style="width:80px;"/>
+      </a>
+    </td>
+    <td style="border: none;">
+      <a href="https://t.me/fluentebi" target="_blank">
+        <img src="https://github.com/alisonpezzott/powerbi/blob/main/assets/icons/telegram.png" alt="nossa comunidade" style="width:80px;"/>
+      </a>
+    </td>
+    <td style="border: none;">
+      <a href="https://www.instagram.com/alisonpezzott" target="_blank">
+        <img src="https://github.com/alisonpezzott/powerbi/blob/main/assets/icons/instagram.png" alt="Alison Pezzott no Instagram" style="width:80px;"/>
+      </a>
+    </td>
+    <td style="border: none;">
+      <a href="https://www.linkedin.com/in/alisonpezzott" target="_blank">
+        <img src="https://github.com/alisonpezzott/powerbi/blob/main/assets/icons/linkedin.png" alt="Alison Pezzott no Linkedin" style="width:80px;"/>
+      </a>
+    </td>
+    <td style="border: none;">
+      <a href="https://www.github.com/alisonpezzott" target="_blank">
+        <img src="https://github.com/alisonpezzott/powerbi/blob/main/assets/icons/github.png" alt="Alison Pezzott no GitHub" style="width:80px;"/>
+      </a>
+    </td>
+  </tr>
+</table>
+
 
