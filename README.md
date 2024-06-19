@@ -1,5 +1,5 @@
 <a href="https://www.youtube.com/@fluentebi" target="_blank">
-  <img src="https://github.com/alisonpezzott/powerbi/blob/0f83b141997846917ff617cbb9f39b7b0a223443/assets/branding/logo-full-frame-4k.png" alt="Meu Canal no YouTube" style="width:200px;"/>
+  <img src="https://github.com/alisonpezzott/powerbi/blob/9f06bb851af832dedad9fa34cad406e956594cb3/assets/branding/header-git.png" alt="fluentebi no YouTube" style="width:800px;"/>
 </a>
 
 ### dCalendario <br>
@@ -11,8 +11,7 @@
 | 4.2 | 2024-02-28 | [dcalendario-v4.2](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/dcalendario-v4.2)||
 | Outras |  | [Arquivo](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/arquivo)||
 
-Inscreva-se: <br> 
-[<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/60051623-edf6-4b60-b622-f50c3541f8f8 width="48"/>](https://www.youtube.com/@fluentebi) <br>
+
 
 Siga-me: <br>
 [<img src=https://github.com/alisonpezzott/powerbi/assets/58135934/62074180-060f-449c-afdc-7c994145acf7 width="48"/>](https://www.instagram.com/alisonpezzott)
