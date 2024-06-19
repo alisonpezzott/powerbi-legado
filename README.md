@@ -1,3 +1,7 @@
+<a href="https://www.youtube.com/@fluentebi" target="_blank">
+  <img src="https://github.com/alisonpezzott/powerbi/blob/0f83b141997846917ff617cbb9f39b7b0a223443/assets/branding/logo-full-frame-4k.png" alt="Meu Canal no YouTube" style="width:200px;"/>
+</a>
+
 ### dCalendario <br>
 
 | Versão | Data | Acesso | Alterações |
