@@ -18,7 +18,13 @@ Siga nossos canais e entre para a comunidade clicando <a href="https://t.me/flue
 | 4.2 | 2024-02-28 | [dcalendario-v4.2](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/dcalendario-v4.2)||
 | Outras |  | [Arquivo](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/arquivo)||
 
+## Tópicos
 
+### [DAX](https://github.com/alisonpezzott/powerbi/tree/main/dax)
+
+### [POWER-QUERY-M](https://github.com/alisonpezzott/powerbi/tree/main/power-query-m) 
+
+<br>
 
 <table style="border-collapse: collapse; border: none;">
   <tr>
