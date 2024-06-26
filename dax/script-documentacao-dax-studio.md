@@ -10,7 +10,7 @@ Este script extrai o conteúdo do modelo do PBIX incluindo:
 - Formatos de medidas e colunas
 
 Instruções
-1. Faça o download do DAX Studio disponível neste [link](https://daxstudio.org/);  
+1. Faça o download e instale do DAX Studio disponível neste [link](https://daxstudio.org/);  
 2. Abra o PBIX desejado no Power BI Dektop;  
 3. Com o Power BI Desktop vá até a guia `Ferramentas Externas` e clique em `DAX Studio` que irá se abrir;
 4. Copie o código abaixo e cole na área da query no DAX Studio
