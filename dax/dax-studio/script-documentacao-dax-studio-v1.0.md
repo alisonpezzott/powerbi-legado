@@ -23,7 +23,7 @@ Instruções
 
 // Script criado por Alison Pezzott em 16 de junho de 2024 para utilização no DAX Studio
 // para extração do modelo do arquivo .PBIX
-// Disponível em: https://github.com/alisonpezzott/powerbi/blob/main/dax/script-documentacao-dax-studio.md
+// Disponível em: https://github.com/alisonpezzott/powerbi/blob/main/dax/script-documentacao-dax-studio-v1.0.md
 
 DEFINE
     
