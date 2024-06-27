@@ -19,6 +19,11 @@ Siga nossos canais e entre para a comunidade clicando <a href="https://t.me/flue
 | 4.2 | 2024-02-28 | [dcalendario-v4.2](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/dcalendario-v4.2)||
 | Outras |  | [Arquivo](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/arquivo)||
 
+### Script de documentação via DAX Studio <br>
+| Versão | Data | Acesso | Alterações |
+| :- | - | :- | :- |
+| 1.0 (atual) | 2024-06-26 |[script-documentacao-dax-studio-v1.0.md](https://github.com/alisonpezzott/powerbi/blob/main/dax/dax-studio/script-documentacao-dax-studio-v1.0.md)|Versão inicial|
+
 ## Tópicos
 
 ### [DAX](https://github.com/alisonpezzott/powerbi/tree/main/dax)
