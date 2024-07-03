@@ -233,7 +233,7 @@
                 if mesDiaNo >= 621 and mesDiaNo <= 921 then 2 else 
                 if mesDiaNo >= 922 and mesDiaNo <= 1221 then 3 else 
                 4 ,
-            dataReferenciaFechamento = if diaMes <= diaInicioMesFechamento then data else Date.AddMonths ( data, 1 )  
+            dataReferenciaFechamento = if diaMes <= diaInicioMesFechamento - 1 then data else Date.AddMonths ( data, 1 )  
 
         in 
         //Saída das transformações 
