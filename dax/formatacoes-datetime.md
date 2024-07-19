@@ -41,7 +41,7 @@ VAR __Resultado =
     IF (
         __Valor,
         __PrefixoSinal &
-        FORMAT ( __Horas, "00" ) & ":"
+        FORMAT ( __Horas, "#0,0" ) & ":"
             & FORMAT ( __Minutos, "00" ) & ":"
             & FORMAT ( __Segundos, "00" )
     )
