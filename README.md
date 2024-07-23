@@ -20,6 +20,17 @@ Siga nossos canais e entre para a comunidade clicando <a href="https://t.me/flue
 | 4.2 | 2024-02-28 | [dcalendario-v4.2](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/dcalendario-v4.2)|||
 | Outras |  | [Arquivo](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/arquivo)|||
 
+### Tabela de períodos <br>
+| Versão | Data | Download | Alterações |
+| :- | - | :- | :- |
+|1.0 | 2024-07-23 | [tabela-periodos-v1.0](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/tabela-periodos-v1.0) | Versão inicial |
+
+### Tabela ponte dias úteis <br>
+| Versão | Data | Download | Alterações |
+| :- | - | :- | :- |
+|1.0 | 2024-07-23 | [ponte-dias-uteis-v1.0](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/ponte-dias-uteis-v1.0)| Versão inicial |
+
+
 ### Script de documentação via DAX Studio <br>
 | Versão | Data | Acesso | Alterações |
 | :- | - | :- | :- |
