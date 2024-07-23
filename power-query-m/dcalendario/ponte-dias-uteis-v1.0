@@ -1,0 +1,18 @@
+let
+    //Referencia as colunas Data e DiaUtilNum da dCalendario
+    refCalendario = dCalendario[[Data], [DiaUtilNum]],
+    
+    //Adiciona a coluna ProximoDiaUtil onde se o dia for útil
+    //traz ele mesmo. Caso contrário, traz nulo.
+    proximoDiaUtilAdicionado = Table.AddColumn (
+        refCalendario, 
+        "ProximoDiaUtil", 
+        each if [DiaUtilNum] = 1 then [Data] else null, 
+        type nullable date 
+    ),
+
+    //Preenche os nulos acima
+    preenchidoAcima = Table.FillUp ( proximoDiaUtilAdicionado, { "ProximoDiaUtil" } )
+
+in
+    preenchidoAcima
