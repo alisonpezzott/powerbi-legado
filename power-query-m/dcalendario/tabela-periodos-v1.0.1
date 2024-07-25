@@ -23,8 +23,8 @@ let
 
         //Dia
             { "Hoje",                   1, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] =     0                       )[Data]          },
-            { "Ontem",                  2, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] >=   -6 and [DataOffset] <= 0 )[Data]          },   
-            { "Anteontem",              3, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] >=   -6 and [DataOffset] <= 0 )[Data]          },
+            { "Ontem",                  2, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] =    -1                       )[Data]          },   
+            { "Anteontem",              3, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] =    -2                       )[Data]          },
             { "Últimos 7 dias",         4, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] >=   -6 and [DataOffset] <= 0 )[Data]          },
             { "Últimos 15 dias",        5, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] >=  -14 and [DataOffset] <= 0 )[Data]          },
             { "Últimos 30 dias",        6, "Dia",             2, Table.SelectRows ( dCalendario, each [DataOffset] >=  -29 and [DataOffset] <= 0 )[Data]          },
