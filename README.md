@@ -23,7 +23,8 @@ Siga nossos canais e entre para a comunidade clicando <a href="https://t.me/flue
 ### Tabela de períodos <br>
 | Versão | Data | Download | Alterações |
 | :- | - | :- | :- |
-|1.0 | 2024-07-23 | [tabela-periodos-v1.0](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/tabela-periodos-v1.0) | Versão inicial |
+|1.0.1 | 2024-07-25 | [tabela-periodos-v1.0.1](https://github.com/alisonpezzott/powerbi/blob/main/power-query-m/dcalendario/tabela-periodos-v1.0.1) | Bugs corrigidos |
+|1.0 | 2024-07-23 | Não disponível | Versão inicial |
 
 ### Tabela ponte dias úteis <br>
 | Versão | Data | Download | Alterações |
