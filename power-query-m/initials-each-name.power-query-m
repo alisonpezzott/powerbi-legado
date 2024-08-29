@@ -1,0 +1,22 @@
+//Invoke the function
+(Text as text) as text =>
+let
+    //Example
+    //Text = "Bruno Campo da Silva",
+
+    //Cleaning text
+    Clean = Text.Trim(Text.Clean(Text.FromBinary(Text.ToBinary(Text, 1251), TextEncoding.Utf8))),
+    
+    //split the text on a list of words
+    Split = Text.Split(Clean, " " ),
+    
+    //Extract just the first letter of each word
+    TextStarts = List.Transform(Split, each Text.Start(_, 1)),
+    
+    //Select just items in list of upper letters
+    UpperFiltered = List.Select(TextStarts, each List.Contains({"A".."Z"}, _)),
+    
+    //Combine the list in a unique string
+    CombinedText = Text.Combine(UpperFiltered)
+in
+    CombinedText
