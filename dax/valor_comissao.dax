@@ -1,0 +1,18 @@
+Valor Comissão = 
+
+	SUMX (
+		fVendas,
+		VAR __MargemPerc = 'Medidas'[Margem %]
+		VAR __Vendas = 'Medidas'[Total Vendas]
+		RETURN
+		SWITCH (
+			TRUE ( ),
+			__MargemPerc <= 0.05, __Vendas * 0.000,  
+			__MargemPerc <= 0.10, __Vendas * 0.003, 
+			__MargemPerc <= 0.15, __Vendas * 0.008, 
+			__MargemPerc <= 0.20, __Vendas * 0.014, 
+			//Senão               __Vendas * 0.016,  
+		)
+	)
+
+  
