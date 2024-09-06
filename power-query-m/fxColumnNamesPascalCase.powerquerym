@@ -1,0 +1,40 @@
+// Function to rename columns with standardized PascalCase names
+(inputTable as table) as table =>
+    let
+        // Function to standardize each column name to PascalCase
+        fxStandardName = (inputText as text) as text =>
+        let
+            // Remove accents, select only alphanumeric chars and transform text to lower case
+            removeAccents = Text.FromBinary(Text.ToBinary(inputText, 1251), TextEncoding.Utf8),
+            charactersFiltered = Text.Select(Text.Lower(removeAccents), List.Transform({"a".."z"} & {0..9} & {" ", "_"}, Text.From)),
+            
+            // Replace underscores, hyphens, dots, commas with spaces
+            fxReplaceSeparators = (inputText, fromList, to) => 
+                List.Accumulate(fromList, inputText, (state, current) => Text.Replace(state, current, to)),
+            textReplaced = fxReplaceSeparators(charactersFiltered, {"_", "-", ".", ";", ","}, " "),
+            
+            // Split the string into words using spaces as delimiters
+            listOfWords = Text.Split(textReplaced, " "),
+
+            // Remove null items
+            removedSpaces = List.Select(listOfWords, each not List.Contains({"", " ", null}, _)),
+            
+            // Capitalize and combine all the words into a single string
+            capitalized = List.Transform(removedSpaces, Text.Proper),
+            combineText = Text.Combine(capitalized)
+        in
+            combineText,
+
+        // Original column names
+        fromColNames = Table.ColumnNames(inputTable),
+        
+        // Apply the standardization to the original column names
+        toColNames = List.Transform(fromColNames, fxStandardName),
+        
+        // Create a zipped list of renames
+        renamesList = List.Zip({fromColNames, toColNames}),
+
+        // Rename the columns with standardized PascalCase names
+        renamedColumns = Table.RenameColumns(inputTable, renamesList)
+    in
+        renamedColumns
