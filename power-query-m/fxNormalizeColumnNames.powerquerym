@@ -1,0 +1,45 @@
+// Function to normalize the column names into PascalCase
+(__table as table) as table =>
+let
+
+    // Function to normalize any text into PascalCase
+    fxNormalizeNames = (__input as text) as text =>
+    let
+        // Remove accents
+        unaccented = Text.FromBinary(Text.ToBinary(__input, 1251)),
+
+        // Define a list of special characters
+        specialCharacters = Text.ToList("""'`~!@#$%^&*()-_=+[]{}|;:\,.<>?/\ #(lf)#(cr)#(tab)"),
+
+        // Define a function to replace all special characters in text with a space
+        fxReplaceAllSpecialCharacters = (__text as text, __specialCharacters as list, __newCharacter as text) as text =>
+            List.Accumulate(
+                __specialCharacters,
+                __text,
+                (state, current) => Text.Replace(state, current, __newCharacter)
+            ),
+
+        // Replace all special characters in text with a space
+        cleaned = fxReplaceAllSpecialCharacters(unaccented, specialCharacters, " "),
+
+        // Capitalize the first letter of each word
+        capitalized = Text.Proper(cleaned),
+
+        // Remove all spaces
+        output = Text.Replace(capitalized, " ", "")
+    in
+        output,
+
+    // Extract the column names of the table
+    fromColNames = Table.ColumnNames(__table),
+
+    // Generate a normalized list of column names
+    toColNames = List.Transform(fromColNames, fxNormalizeNames),
+
+    // Create a list of "from-to" pairs called renames
+    renames = List.Zip({fromColNames, toColNames}),
+
+    // Rename the columns using the renames list
+    renamedColumns = Table.RenameColumns(__table, renames)
+in
+    renamedColumns
